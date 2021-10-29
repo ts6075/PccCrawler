@@ -1,4 +1,5 @@
 ﻿using PccCrawler.Extension;
+using PccCrawler.PccEnum;
 
 namespace PccCrawler.Model
 {
@@ -7,7 +8,10 @@ namespace PccCrawler.Model
 	/// </summary>
 	public class SearchVo
 	{
-		public int pageIndex {  get; set; }
+		/// <summary>
+		/// 第N頁
+		/// </summary>
+		public int pageIndex { get; set; } = 1;
 		public string method { get; set; } = "search";
 		public bool searchMethod { get; set; } = true;
 		public string searchTarget { get; set; } = "TPAM";
@@ -16,16 +20,31 @@ namespace PccCrawler.Model
 		public int hid_1 { get; set; } = 1;
 		public object tenderName { get; set; } = "";
 		public object tenderId { get; set; } = "";
-		public object tenderType { get; set; } = "tenderDeclaration";
+		/// <summary>
+		/// 招標類型
+		/// </summary>
+		public TenderType tenderType { get; set; } = TenderType.tenderDeclaration;
 		/// <summary>
 		/// 招標方式
 		/// </summary>
 		public int? tenderWay { get; set; } = null;
 		public object tenderDateRadio { get; set; } = "on";
-		public string tenderStartDateStr { get; set; } = DateTime.Now.GetNearestWeekday().ToTWDateString();
-		public string tenderEndDateStr { get; set; } = DateTime.Now.GetNearestWeekday().ToTWDateString();
-		public string tenderStartDate { get; set; } = DateTime.Now.GetNearestWeekday().ToTWDateString();
-		public string tenderEndDate { get; set; } = DateTime.Now.GetNearestWeekday().ToTWDateString();
+		/// <summary>
+		/// 公告日期字串 - 起
+		/// </summary>
+		public string tenderStartDateStr => tenderStartDate.ToString();
+		/// <summary>
+		/// 公告日期字串 - 訖
+		/// </summary>
+		public string tenderEndDateStr => tenderEndDate.ToString();
+		/// <summary>
+		/// 公告日期 - 起
+		/// </summary>
+		public string tenderStartDate { get; set; } = DateTime.Now.AddDays(-1).GetNearestWeekday().ToTWDateString();
+		/// <summary>
+		/// 公告日期 - 訖
+		/// </summary>
+		public string tenderEndDate { get; set; } = DateTime.Now.AddDays(-1).GetNearestWeekday().ToTWDateString();
 		public string isSpdt { get; set; } = "N";
 		public object spdtStartDate { get; set; } = "";
 		public object spdtEndDate { get; set; } = "";

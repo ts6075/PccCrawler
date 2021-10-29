@@ -5,6 +5,8 @@ using System.Net.Http.Headers;
 using System.Text;
 using PccCrawler.Service;
 using PccCrawler.Extension;
+using System.Net;
+using System.Diagnostics;
 
 namespace PccCrawler
 {
@@ -26,43 +28,73 @@ namespace PccCrawler
                4、無法決標公告
                5、更正公告
              */
-            Console.WriteLine("取得最新招標清單中...");
-            var pks = new List<string>();
-            var total = await GetTotalItem();
-            for (var pageIndex = 1; pageIndex < total / 100 + 2; pageIndex++)
+            Console.WriteLine("Start");
+            foreach (var radProctrgCate in new RadProctrgCate[] { RadProctrgCate.工程, RadProctrgCate.財物, RadProctrgCate.勞務 })
             {
-                var doc = await GetHtmlDoc(pageIndex);
-                var trNodes = doc.GetElementbyId("print_area")?.SelectNodes("./table/tr");
-                for (var i = 1; i < trNodes.Count - 1; i++)
+                Console.WriteLine($"Crawling List:{radProctrgCate}...");
+                var pks = new List<string>();
+                var total = await GetTotalItem(radProctrgCate);
+                var totalPage = total switch
                 {
-                    var hrefNode = trNodes[i].SelectSingleNode("./td[4]/a");
-                    var href = hrefNode.GetAttributeValue("href", null);
-                    var pk = href.Contains("primaryKey=") ? href.Split("primaryKey=")[1] : "";
-                    pks.Add(pk);
+                    0 => 0,
+                    > 0 and <= 100 => 1,
+                    > 100 => total / 100 + (total % 100 != 0 ? 1 : 0),
+                    _ => 0
+                };
+                for (var pageIndex = 1; pageIndex <= totalPage; pageIndex++)
+                {
+                    var doc = await GetHtmlDoc(pageIndex, radProctrgCate);
+                    var trNodes = doc.GetElementbyId("print_area")?.SelectNodes("./table/tr");
+                    if (trNodes == null)
+                    {
+                        Console.WriteLine("Get List Fail");
+                        return;
+                    }
+                    for (var i = 1; i < trNodes.Count - 1; i++)
+                    {
+                        var hrefNode = trNodes[i].SelectSingleNode("./td[4]/a");
+                        var href = hrefNode.GetAttributeValue("href", null);
+                        var pk = href.Contains("primaryKey=") ? href.Split("primaryKey=")[1] : "";
+                        pks.Add(pk);
+                    }
+                }
+                Console.WriteLine($"TotalItem:{pks.Count} count");
+
+                Stopwatch stopWatch = new Stopwatch();
+                foreach (var pk in pks)
+                {
+                    stopWatch.Reset();
+                    stopWatch.Start();
+                    Console.WriteLine($"Crawling Detail:{pk}...");
+                    var detailDoc = await GetDetailHtmlDoc(pk);
+                    var detailTrNodes = detailDoc.GetElementbyId("print_area")?.SelectNodes("./table/tr");
+                    if (detailTrNodes == null)
+                    {
+                        Console.WriteLine("Get Detail Fail");
+                        return;
+                    }
+                    var region1 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_1").ToList();
+                    var region2 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_2").ToList();
+                    var region3 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_3").ToList();
+                    var region4 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_4").ToList();
+                    var region5 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_5").ToList();
+                    AnalyzeAndConsole(region1);
+                    AnalyzeAndConsole(region2);
+                    AnalyzeAndConsole(region3);
+                    AnalyzeAndConsole(region4);
+                    AnalyzeAndConsole(region5);
+                    stopWatch.Stop();
+                    int totalSeconds = (int)stopWatch.Elapsed.TotalSeconds;
+                    Console.WriteLine("RunTime:" + totalSeconds);
+                    if (totalSeconds < 15)
+                    {
+                        Console.WriteLine($"Use time is too short, a little delay:{15 - totalSeconds}");
+                        Thread.Sleep((15 - totalSeconds) * 1000);
+                    }
                     break;
                 }
-                break;
             }
-            Console.WriteLine($"{pks.Count}筆");
-            Console.WriteLine("爬取中");
-            var detailDoc = await GetDetailHtmlDoc(pks.First());
-            var detailTrNodes = detailDoc.GetElementbyId("print_area")?.SelectNodes("./table/tr");
-            if (detailTrNodes == null)
-            {
-                Console.WriteLine("Get Detail Fail");
-                return;
-            }
-            var region1 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_1").ToList();
-            var region2 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_2").ToList();
-            var region3 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_3").ToList();
-            var region4 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_4").ToList();
-            var region5 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_5").ToList();
-            AnalyzeAndConsole(region1);
-            AnalyzeAndConsole(region2);
-            AnalyzeAndConsole(region3);
-            AnalyzeAndConsole(region4);
-            AnalyzeAndConsole(region5);
-            Console.WriteLine("結束");
+            Console.WriteLine("End");
             return;
         }
 
@@ -83,10 +115,14 @@ namespace PccCrawler
             return url;
         }
 
-        private async Task<int> GetTotalItem()
+        private async Task<int> GetTotalItem(RadProctrgCate radProctrgCate)
         {
             var url = GetUrl(UrlType.tender);
-            var formData = _httpHelper.GetFormData(new SearchVo());
+            var formData = _httpHelper.GetFormData(new SearchVo
+            {
+                proctrgCate = (int)radProctrgCate,
+                radProctrgCate = (int)radProctrgCate
+            });
             var resp = await _httpHelper.DoPostAsync(url, formData);
             var doc = new HtmlDocument();
             doc.LoadHtml(resp);
@@ -96,10 +132,15 @@ namespace PccCrawler
             return total;
         }
 
-        public async Task<HtmlDocument> GetHtmlDoc(int pageIndex)
+        public async Task<HtmlDocument> GetHtmlDoc(int pageIndex, RadProctrgCate radProctrgCate)
         {
             var url = GetUrl(UrlType.tender);
-            var formData = _httpHelper.GetFormData(new SearchVo { pageIndex = pageIndex });
+            var formData = _httpHelper.GetFormData(new SearchVo
+            {
+                pageIndex = pageIndex,
+                proctrgCate = (int)radProctrgCate,
+                radProctrgCate = (int)radProctrgCate
+            });
             var resp = await _httpHelper.DoPostAsync(url, formData);
             var doc = new HtmlDocument();
             doc.LoadHtml(resp);
