@@ -1,24 +1,23 @@
 using HtmlAgilityPack;
 using PccCrawler.Model;
 using PccCrawler.PccEnum;
-using System.Net.Http.Headers;
-using System.Text;
-using PccCrawler.Service;
 using PccCrawler.Extension;
-using System.Net;
 using System.Diagnostics;
 using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
 using PccCrawler.Service.Interface;
+using Microsoft.Extensions.Options;
 
 namespace PccCrawler
 {
     public class Crawler
     {
+        private readonly CrawlerOption _options;
         private readonly IHttpService _httpService;
 
-        public Crawler(IHttpService httpService)
+        public Crawler(IOptions<CrawlerOption> options, IHttpService httpService)
         {
+            _options = options.Value;
             _httpService = httpService;
         }
 
@@ -60,7 +59,11 @@ namespace PccCrawler
                         var pk = href.Contains("primaryKey=") ? href.Split("primaryKey=")[1] : "";
                         pks.Add(pk);
                     }
-                    break;
+
+                    if (_options.Mode == "Debug")
+                    {
+                        break;
+                    }
                 }
                 Console.WriteLine($"TotalItem:{pks.Count} count");
 
@@ -96,7 +99,10 @@ namespace PccCrawler
                         Console.WriteLine($"Use time is too short, a little delay:{15 - totalSeconds}");
                         Thread.Sleep((15 - totalSeconds) * 1000);
                     }
-                    break;
+                    if (_options.Mode == "Debug")
+                    {
+                        break;
+                    }
                 }
                 WriteExcel($@"C:\Users\User.DESKTOP-4FQUFIT\source\repos\PccCrawler\PccCrawler\{radProctrgCate}.xls", allDatas);
             }
@@ -164,9 +170,9 @@ namespace PccCrawler
         }
         #endregion
 
-        private Dictionary<string,string> AnalyzeAndConsole(List<HtmlNode> htmlNodes)
+        private Dictionary<string, string> AnalyzeAndConsole(List<HtmlNode> htmlNodes)
         {
-            var result = new Dictionary<string,string>();
+            var result = new Dictionary<string, string>();
             foreach (var trNode in htmlNodes)
             {
                 var key = "";
