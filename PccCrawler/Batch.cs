@@ -20,7 +20,7 @@ namespace PccCrawler
             // 3. 建立依賴服務提供者
             var serviceProvider = serviceCollection.BuildServiceProvider();
             // 4. 執行主服務
-            var crawler = serviceProvider.GetRequiredService<Crawler>();
+            var crawler = serviceProvider.GetRequiredService<CrawlerService>();
             Task task = Task.Factory.StartNew(async () => await crawler.RunAsync());
             task.Wait();
         }
@@ -29,9 +29,17 @@ namespace PccCrawler
         {
             services.AddOptions();
             services.Configure<CrawlerOption>(configuration.GetSection(nameof(CrawlerOption)));
-            services.AddTransient<Crawler>();
+            services.Configure<HttpOption>(configuration.GetSection(nameof(HttpOption)));
+            services.AddTransient<CrawlerService>();
             services.AddSingleton<HttpClient>();
-            services.AddTransient<IHttpService, HttpService>();
+            if (configuration.GetSection("HttpOption").GetValue<string>("Mode") == "Debug")
+            {
+                services.AddTransient<IHttpService, MockHttpService>();
+            }
+            else
+            {
+                services.AddTransient<IHttpService, HttpService>();
+            }
             return;
         }
     }

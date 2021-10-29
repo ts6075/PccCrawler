@@ -10,12 +10,12 @@ using Microsoft.Extensions.Options;
 
 namespace PccCrawler
 {
-    public class Crawler
+    public class CrawlerService
     {
         private readonly CrawlerOption _options;
         private readonly IHttpService _httpService;
 
-        public Crawler(IOptions<CrawlerOption> options, IHttpService httpService)
+        public CrawlerService(IOptions<CrawlerOption> options, IHttpService httpService)
         {
             _options = options.Value;
             _httpService = httpService;
