@@ -9,16 +9,17 @@ using System.Net;
 using System.Diagnostics;
 using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
+using PccCrawler.Service.Interface;
 
 namespace PccCrawler
 {
     public class Crawler
     {
-        private readonly HttpService _httpHelper;
+        private readonly IHttpService _httpService;
 
-        public Crawler(HttpClient client)
+        public Crawler(IHttpService httpService)
         {
-            _httpHelper = new HttpService(client);
+            _httpService = httpService;
         }
 
         public async Task RunAsync()
@@ -124,12 +125,12 @@ namespace PccCrawler
         private async Task<int> GetTotalItem(RadProctrgCate radProctrgCate)
         {
             var url = GetUrl(UrlType.tender);
-            var formData = _httpHelper.GetFormData(new SearchVo
+            var formData = _httpService.GetFormData(new SearchVo
             {
                 proctrgCate = (int)radProctrgCate,
                 radProctrgCate = (int)radProctrgCate
             });
-            var resp = await _httpHelper.DoPostAsync(url, formData);
+            var resp = await _httpService.DoPostAsync(url, formData);
             var doc = new HtmlDocument();
             doc.LoadHtml(resp);
 
@@ -141,13 +142,13 @@ namespace PccCrawler
         public async Task<HtmlDocument> GetHtmlDoc(int pageIndex, RadProctrgCate radProctrgCate)
         {
             var url = GetUrl(UrlType.tender);
-            var formData = _httpHelper.GetFormData(new SearchVo
+            var formData = _httpService.GetFormData(new SearchVo
             {
                 pageIndex = pageIndex,
                 proctrgCate = (int)radProctrgCate,
                 radProctrgCate = (int)radProctrgCate
             });
-            var resp = await _httpHelper.DoPostAsync(url, formData);
+            var resp = await _httpService.DoPostAsync(url, formData);
             var doc = new HtmlDocument();
             doc.LoadHtml(resp);
             return doc;
@@ -156,7 +157,7 @@ namespace PccCrawler
         public async Task<HtmlDocument> GetDetailHtmlDoc(string pk)
         {
             var url = GetUrl(UrlType.tpam_tender_detail, pk);
-            var resp = await _httpHelper.DoGetAsync(url);
+            var resp = await _httpService.DoGetAsync(url);
             var doc = new HtmlDocument();
             doc.LoadHtml(resp);
             return doc;

@@ -1,4 +1,7 @@
-﻿using System.Text;
+﻿using Microsoft.Extensions.DependencyInjection;
+using PccCrawler.Service;
+using PccCrawler.Service.Interface;
+using System.Text;
 using System.Text.Json;
 
 namespace PccCrawler
@@ -7,33 +10,17 @@ namespace PccCrawler
     {
         public static void Main(string[] args)
         {
-            #region Test
-            /*
-            Task task1 = Task.Factory.StartNew(async() =>
-            {
-                var person = new
-                {
-                    Name = "John Doe",
-                    Occupation = "gardener"
-                };
+            // 1. 建立依賴注入的容器
+            var serviceCollection = new ServiceCollection();
+            // 2. 註冊服務
+            serviceCollection.AddTransient<Crawler>();
+            serviceCollection.AddSingleton<HttpClient>();
+            serviceCollection.AddTransient<IHttpService, HttpService>();
+            // 建立依賴服務提供者
+            var serviceProvider = serviceCollection.BuildServiceProvider();
 
-                var json = JsonSerializer.Serialize(person);
-                var data = new StringContent(json, Encoding.UTF8, "application/json");
-
-                var url = "https://httpbin.org/post";
-                using var client = new HttpClient();
-
-                var response = await client.PostAsync(url, data);
-
-                string result = response.Content.ReadAsStringAsync().Result;
-                Console.WriteLine(result);
-            });
-            task1.Wait();
-            return;
-            */
-            #endregion
-
-            var crawler = new Crawler(new HttpClient());
+            // 3. 執行主服務
+            var crawler = serviceProvider.GetRequiredService<Crawler>();
             Task task = Task.Factory.StartNew(async () => await crawler.RunAsync());
             task.Wait();
         }

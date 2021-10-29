@@ -1,6 +1,8 @@
-﻿namespace PccCrawler.Service
+﻿using PccCrawler.Service.Interface;
+
+namespace PccCrawler.Service
 {
-    public class HttpService
+    public class HttpService : IHttpService
     {
         private readonly HttpClient _httpClient;
         public HttpService(HttpClient httpClient)
