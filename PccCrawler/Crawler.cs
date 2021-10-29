@@ -7,6 +7,8 @@ using PccCrawler.Service;
 using PccCrawler.Extension;
 using System.Net;
 using System.Diagnostics;
+using NPOI.SS.UserModel;
+using NPOI.XSSF.UserModel;
 
 namespace PccCrawler
 {
@@ -57,10 +59,12 @@ namespace PccCrawler
                         var pk = href.Contains("primaryKey=") ? href.Split("primaryKey=")[1] : "";
                         pks.Add(pk);
                     }
+                    break;
                 }
                 Console.WriteLine($"TotalItem:{pks.Count} count");
 
                 Stopwatch stopWatch = new Stopwatch();
+                var allDatas = new List<Dictionary<string, string>>();
                 foreach (var pk in pks)
                 {
                     stopWatch.Reset();
@@ -78,11 +82,11 @@ namespace PccCrawler
                     var region3 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_3").ToList();
                     var region4 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_4").ToList();
                     var region5 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_5").ToList();
-                    AnalyzeAndConsole(region1);
-                    AnalyzeAndConsole(region2);
-                    AnalyzeAndConsole(region3);
-                    AnalyzeAndConsole(region4);
-                    AnalyzeAndConsole(region5);
+                    allDatas.Add(AnalyzeAndConsole(region1));
+                    allDatas.Add(AnalyzeAndConsole(region2));
+                    allDatas.Add(AnalyzeAndConsole(region3));
+                    allDatas.Add(AnalyzeAndConsole(region4));
+                    allDatas.Add(AnalyzeAndConsole(region5));
                     stopWatch.Stop();
                     int totalSeconds = (int)stopWatch.Elapsed.TotalSeconds;
                     Console.WriteLine("RunTime:" + totalSeconds);
@@ -93,7 +97,9 @@ namespace PccCrawler
                     }
                     break;
                 }
+                WriteExcel($@"C:\Users\User.DESKTOP-4FQUFIT\source\repos\PccCrawler\PccCrawler\{radProctrgCate}.xls", allDatas);
             }
+            Console.WriteLine("Writing to file...");
             Console.WriteLine("End");
             return;
         }
@@ -157,8 +163,9 @@ namespace PccCrawler
         }
         #endregion
 
-        private void AnalyzeAndConsole(List<HtmlNode> htmlNodes)
+        private Dictionary<string,string> AnalyzeAndConsole(List<HtmlNode> htmlNodes)
         {
+            var result = new Dictionary<string,string>();
             foreach (var trNode in htmlNodes)
             {
                 var key = "";
@@ -192,9 +199,43 @@ namespace PccCrawler
                 {
                     value = tds.First().InnerHtml.TrimEmpty();
                 }
+                result.Add(key, value);
                 Console.WriteLine($"Key:{key}\tValue:{value}");
-                //break;
             }
+            return result;
+        }
+
+        private void WriteExcel(string savePath, List<Dictionary<string, string>> dictList)
+        {
+            IWorkbook wb = new XSSFWorkbook();
+            ISheet sheet = wb.CreateSheet("³øªí");
+
+            //key
+            var rowIndex = 0;
+            var columnIndex = 0;
+            var row = sheet.CreateRow(rowIndex);
+            foreach (var key in dictList.SelectMany(x => x.Keys).Distinct())
+            {
+                var cell = row.CreateCell(columnIndex);
+                cell.SetCellValue(key);
+                sheet.AutoSizeColumn(columnIndex);
+                columnIndex++;
+            }
+            rowIndex++;
+            row = sheet.CreateRow(rowIndex);
+            //value
+            foreach (var dict in dictList)
+            {
+                row = sheet.CreateRow(rowIndex);
+                foreach (var key in dict.Keys)
+                {
+                    columnIndex = sheet.GetRow(0).First(x => x.StringCellValue == key).ColumnIndex;
+                    row.CreateCell(columnIndex).SetCellValue(dict[key]);
+                }
+                rowIndex++;
+            }
+            FileStream fileStream = new FileStream(savePath, FileMode.Create, FileAccess.Write);
+            wb.Write(fileStream);
         }
     }
 }
