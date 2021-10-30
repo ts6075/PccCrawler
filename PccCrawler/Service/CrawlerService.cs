@@ -8,7 +8,7 @@ using NPOI.XSSF.UserModel;
 using PccCrawler.Service.Interface;
 using Microsoft.Extensions.Options;
 
-namespace PccCrawler
+namespace PccCrawler.Service
 {
     public class CrawlerService
     {
@@ -67,7 +67,8 @@ namespace PccCrawler
                 }
                 Console.WriteLine($"TotalItem:{pks.Count} count");
 
-                Stopwatch stopWatch = new Stopwatch();
+                var stopWatch = new Stopwatch();
+                var analyzeService = new AnalyzeService();
                 var allDatas = new List<Dictionary<string, string>>();
                 foreach (var pk in pks)
                 {
@@ -75,22 +76,8 @@ namespace PccCrawler
                     stopWatch.Start();
                     Console.WriteLine($"Crawling Detail:{pk}...");
                     var detailDoc = await GetDetailHtmlDoc(pk);
-                    var detailTrNodes = detailDoc.GetElementbyId("print_area")?.SelectNodes("./table/tr");
-                    if (detailTrNodes == null)
-                    {
-                        Console.WriteLine("Get Detail Fail");
-                        return;
-                    }
-                    var region1 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_1").ToList();
-                    var region2 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_2").ToList();
-                    var region3 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_3").ToList();
-                    var region4 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_4").ToList();
-                    var region5 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_5").ToList();
-                    allDatas.Add(AnalyzeAndConsole(region1));
-                    allDatas.Add(AnalyzeAndConsole(region2));
-                    allDatas.Add(AnalyzeAndConsole(region3));
-                    allDatas.Add(AnalyzeAndConsole(region4));
-                    allDatas.Add(AnalyzeAndConsole(region5));
+                    var po = analyzeService.Analyze<招標公告Po>(detailDoc);
+
                     stopWatch.Stop();
                     int totalSeconds = (int)stopWatch.Elapsed.TotalSeconds;
                     Console.WriteLine("RunTime:" + totalSeconds);
@@ -104,7 +91,7 @@ namespace PccCrawler
                         break;
                     }
                 }
-                WriteExcel($@"C:\Users\User.DESKTOP-4FQUFIT\source\repos\PccCrawler\PccCrawler\{radProctrgCate}.xls", allDatas);
+                WriteExcel($"{Environment.CurrentDirectory}/output/{radProctrgCate}.xls", allDatas);
             }
             Console.WriteLine("Writing to file...");
             Console.WriteLine("End");
@@ -169,48 +156,6 @@ namespace PccCrawler
             return doc;
         }
         #endregion
-
-        private Dictionary<string, string> AnalyzeAndConsole(List<HtmlNode> htmlNodes)
-        {
-            var result = new Dictionary<string, string>();
-            foreach (var trNode in htmlNodes)
-            {
-                var key = "";
-                var value = "";
-                var ths = trNode.SelectNodes("./th");
-                if (ths.Count != 1)
-                {
-                    Console.WriteLine($"程式終止:檢測到未處理的特殊欄位，請通知工程師進行例外處理，參數:{Environment.NewLine}" +
-                                      $"ths.Count:{ths.Count}{Environment.NewLine}" +
-                                      $"InnerHtml:{trNode.InnerHtml}{Environment.NewLine}");
-                    break;
-                }
-                else
-                {
-                    key = ths.First().InnerHtml.TrimEmpty();
-                }
-
-                var tds = trNode.SelectNodes("./td");
-                if (tds.Count == 0)
-                {
-                    Console.WriteLine($"程式終止:檢測到未處理的特殊欄位，請通知工程師進行例外處理，參數:{Environment.NewLine}" +
-                                      $"tds.Count:{tds.Count}{Environment.NewLine}" +
-                                      $"InnerHtml:{trNode.InnerHtml}{Environment.NewLine}");
-                    break;
-                }
-                else if (tds.Count > 1)
-                {
-                    value = tds.Skip(1).First().InnerText.TrimEmpty();
-                }
-                else
-                {
-                    value = tds.First().InnerHtml.TrimEmpty();
-                }
-                result.Add(key, value);
-                Console.WriteLine($"Key:{key}\tValue:{value}");
-            }
-            return result;
-        }
 
         private void WriteExcel(string savePath, List<Dictionary<string, string>> dictList)
         {

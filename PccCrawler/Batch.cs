@@ -21,8 +21,15 @@ namespace PccCrawler
             var serviceProvider = serviceCollection.BuildServiceProvider();
             // 4. 執行主服務
             var crawler = serviceProvider.GetRequiredService<CrawlerService>();
-            Task task = Task.Factory.StartNew(async () => await crawler.RunAsync());
-            task.Wait();
+            try
+            {
+                Task task = Task.Factory.StartNew(async () => await crawler.RunAsync());
+                task.Wait();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
         }
 
         private static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
