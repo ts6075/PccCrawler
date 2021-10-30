@@ -81,14 +81,14 @@ namespace PccCrawler.Service
                     stopWatch.Stop();
                     int totalSeconds = (int)stopWatch.Elapsed.TotalSeconds;
                     Console.WriteLine("RunTime:" + totalSeconds);
+                    if (_options.Mode == "Debug")
+                    {
+                        break;
+                    }
                     if (totalSeconds < 15)
                     {
                         Console.WriteLine($"Use time is too short, a little delay:{15 - totalSeconds}");
                         Thread.Sleep((15 - totalSeconds) * 1000);
-                    }
-                    if (_options.Mode == "Debug")
-                    {
-                        break;
                     }
                 }
                 WriteExcel($"{Environment.CurrentDirectory}/output/{radProctrgCate}.xls", allDatas);

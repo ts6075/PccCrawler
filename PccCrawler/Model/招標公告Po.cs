@@ -1,9 +1,5 @@
 ﻿namespace PccCrawler.Model
 {
-    public class Common
-    {
-        public List<string> Replace => new List<string> { "「", "(", ")", "」", "、" };
-    }
     public class 招標公告Po
     {
         public 機關資料? 機關資料 { get; set; }
@@ -79,7 +75,8 @@
     #region 領投開標
     public class 領投開標
     {
-        public 是否提供電子領標? 是否提供電子領標 { get; set; }
+        public 是否提供電子領標? 是否提供電子領標Po { get; set; }
+        public string? 是否提供電子領標 { get; set; }
         public string? 是否提供電子投標 { get; set; }
         public string? 截止投標 { get; set; }
         public string? 開標時間 { get; set; }
