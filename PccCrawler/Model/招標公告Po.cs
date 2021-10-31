@@ -2,6 +2,7 @@
 {
     public class 招標公告Po
     {
+        public string Url { get;set; }
         public 機關資料? 機關資料 { get; set; }
         public 採購資料? 採購資料 { get; set; }
         public 招標資料? 招標資料 { get; set; }
@@ -27,6 +28,8 @@
         public string? 標案案號 { get; set; }
         public string? 標案名稱 { get; set; }
         public string? 標的分類 { get; set; }
+        public string? 工程計畫編號 { get; set; }
+        public string? 本採購案是否屬於建築工程 { get; set; }
         public string? 財物採購性質 { get; set; }
         public string? 採購金額級距 { get; set; }
         public string? 辦理方式 { get; set; }
@@ -105,6 +108,7 @@
         public string? 履約期限 { get; set; }
         public string? 是否刊登公報 { get; set; }
         public string? 本案採購契約是否採用主管機關訂定之範本 { get; set; }
+        public string? 是否屬災區重建工程 { get; set; }
         public string? 廠商資格摘要 { get; set; }
         public string? 是否訂有與履約能力有關之基本資格 { get; set; }
         public string? 附加說明 { get; set; }

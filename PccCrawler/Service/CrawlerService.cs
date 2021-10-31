@@ -1,7 +1,6 @@
 using HtmlAgilityPack;
 using PccCrawler.Model;
 using PccCrawler.PccEnum;
-using PccCrawler.Extension;
 using System.Diagnostics;
 using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
@@ -31,6 +30,9 @@ namespace PccCrawler.Service
                5、更正公告
              */
             Console.WriteLine("Start");
+            Console.WriteLine("Search Database...");
+            var dao = new SQLiteService($"{Environment.CurrentDirectory}/data/db.db");
+            var masterList = dao.GetList<PccMasterPo>("PccMaster");
             foreach (var radProctrgCate in new RadProctrgCate[] { RadProctrgCate.工程, RadProctrgCate.財物, RadProctrgCate.勞務 })
             {
                 Console.WriteLine($"Crawling List:{radProctrgCate}...");
@@ -57,7 +59,12 @@ namespace PccCrawler.Service
                         var hrefNode = trNodes[i].SelectSingleNode("./td[4]/a");
                         var href = hrefNode.GetAttributeValue("href", null);
                         var pk = href.Contains("primaryKey=") ? href.Split("primaryKey=")[1] : "";
-                        pks.Add(pk);
+                        // 只加入未曾爬取過的資料
+                        if (!masterList.Where(x => x.Status != 900).Select(x => x.Id).Contains(pk))
+                        {
+                            dao.Execute($"insert into PccMaster (Id, Url, Status) values ({pk}, '{GetUrl(UrlType.tpam_tender_detail, pk)}', 100) ");
+                            pks.Add(pk);
+                        }
                     }
 
                     if (_options.Mode == "Debug")
@@ -65,11 +72,10 @@ namespace PccCrawler.Service
                         break;
                     }
                 }
-                Console.WriteLine($"TotalItem:{pks.Count} count");
+                Console.WriteLine($"TotalItem: {total} count，NewItem: {pks.Count} count");
 
                 var stopWatch = new Stopwatch();
                 var analyzeService = new AnalyzeService();
-                var allDatas = new List<Dictionary<string, string>>();
                 var 招標公告Pos = new List<招標公告Po>();
                 foreach (var pk in pks)
                 {
@@ -77,15 +83,9 @@ namespace PccCrawler.Service
                     stopWatch.Start();
                     Console.WriteLine($"Crawling Detail:{pk}...");
                     var detailDoc = await GetDetailHtmlDoc(pk);
-                    try
-                    {
-                        var po = analyzeService.Analyze<招標公告Po>(detailDoc);
-                        招標公告Pos.Add(po);
-                    }
-                    catch (Exception ex)
-                    {
-                        ;
-                    }
+                    var po = analyzeService.Analyze<招標公告Po>(detailDoc);
+                    po.Url = GetUrl(UrlType.tpam_tender_detail, pk);
+                    招標公告Pos.Add(po);
 
                     stopWatch.Stop();
                     int totalSeconds = (int)stopWatch.Elapsed.TotalSeconds;
@@ -94,11 +94,12 @@ namespace PccCrawler.Service
                     {
                         break;
                     }
-                    if (totalSeconds < 15)
+                    if (totalSeconds < _options.IntervalSeconds)
                     {
                         Console.WriteLine($"Use time is too short, a little delay:{15 - totalSeconds}");
-                        Thread.Sleep((15 - totalSeconds) * 1000);
+                        Thread.Sleep((_options.IntervalSeconds - totalSeconds) * 1000);
                     }
+                    GetUrl(UrlType.tpam_tender_detail, pk);
                 }
                 WriteExcel($"{Environment.CurrentDirectory}/output/{radProctrgCate}.xls", 招標公告Pos);
             }
@@ -165,39 +166,6 @@ namespace PccCrawler.Service
             return doc;
         }
         #endregion
-
-        private void WriteExcel(string savePath, List<Dictionary<string, string>> dictList)
-        {
-            IWorkbook wb = new XSSFWorkbook();
-            ISheet sheet = wb.CreateSheet("報表");
-
-            //key
-            var rowIndex = 0;
-            var columnIndex = 0;
-            var row = sheet.CreateRow(rowIndex);
-            foreach (var key in dictList.SelectMany(x => x.Keys).Distinct())
-            {
-                var cell = row.CreateCell(columnIndex);
-                cell.SetCellValue(key);
-                sheet.AutoSizeColumn(columnIndex);
-                columnIndex++;
-            }
-            rowIndex++;
-            row = sheet.CreateRow(rowIndex);
-            //value
-            foreach (var dict in dictList)
-            {
-                row = sheet.CreateRow(rowIndex);
-                foreach (var key in dict.Keys)
-                {
-                    columnIndex = sheet.GetRow(0).First(x => x.StringCellValue == key).ColumnIndex;
-                    row.CreateCell(columnIndex).SetCellValue(dict[key]);
-                }
-                rowIndex++;
-            }
-            FileStream fileStream = new FileStream(savePath, FileMode.Create, FileAccess.Write);
-            wb.Write(fileStream);
-        }
 
         private void WriteExcel<T>(string savePath, List<T> list)
         {
