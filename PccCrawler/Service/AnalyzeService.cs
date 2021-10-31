@@ -287,34 +287,42 @@ namespace PccCrawler.Service
                         SetValue(ref 是否提供電子領標Po, subKey4, subValue4);
                         // ==================================================
                         // 機關文件費指定收款機關單位
-                        var subKey5 = detailTableTrs[4].SelectSingleNode("./td").GetDirectInnerText().Split("：")[0].TrimEmpty();
-                        var subValue5 = detailTableTrs[4].SelectSingleNode("./td").GetDirectInnerText().Split("：")[1].TrimEmpty();
-                        result.Add(subKey5, subValue5);
-                        Console.WriteLine($"Key:{subKey5}\tValue:{subValue5}");
-                        SetValue(ref 是否提供電子領標Po, subKey5, subValue5);
+                        var i = 4;  // 用來判斷有無"機關文件費指定收款機關單位"欄位，若有則寫入，並且i+1
+                        var subKey5 = detailTableTrs[i].SelectSingleNode("./td").GetDirectInnerText().Split("：")[0].TrimEmpty();
+                        if (subKey5 == "機關文件費指定收款機關單位")
+                        {
+                            var subValue5 = detailTableTrs[4].SelectSingleNode("./td").GetDirectInnerText().Split("：")[1].TrimEmpty();
+                            result.Add(subKey5, subValue5);
+                            Console.WriteLine($"Key:{subKey5}\tValue:{subValue5}");
+                            SetValue(ref 是否提供電子領標Po, subKey5, subValue5);
+                            i++;
+                        }
                         // ==================================================
                         // 是否提供現場領標
-                        var subKey6 = detailTableTrs[5].SelectSingleNode("./td").GetDirectInnerText().Split("：")[0].TrimEmpty();
-                        var subValue6 = detailTableTrs[5].SelectSingleNode("./td").GetDirectInnerText().Split("：")[1].TrimEmpty();
-                        result.Add(subKey6, subValue6);
-                        Console.WriteLine($"Key:{subKey6}\tValue:{subValue6}");
-                        SetValue(ref 是否提供電子領標Po, subKey6, subValue6);
-                        // --------------------------------------------------
-                        if (subValue6 == "是")
+                        var subKey6 = detailTableTrs[i].SelectSingleNode("./td").GetDirectInnerText().Split("：")[0].TrimEmpty();
+                        if (subKey6 == "是否提供現場領標")
                         {
-                            var subKey6DetailTableTrs = detailTableTrs[5].SelectSingleNode("./td").SelectNodes("./table/tr");
-                            // 招標文件領取地點
-                            var subKey6_1 = subKey6DetailTableTrs[0].SelectSingleNode("./th/strong").GetDirectInnerText().TrimEmpty();
-                            var subValue6_1 = subKey6DetailTableTrs[0].SelectSingleNode("./td").GetDirectInnerText().TrimEmpty();
-                            result.Add(subKey6_1, subValue6_1);
-                            Console.WriteLine($"Key:{subKey6_1}\tValue:{subValue6_1}");
-                            SetValue(ref 是否提供電子領標Po, subKey6_1, subValue6_1);
-                            // 招標文件售價及付款方式
-                            var subKey6_2 = subKey6DetailTableTrs[1].SelectSingleNode("./th/strong").GetDirectInnerText().TrimEmpty();
-                            var subValue6_2 = subKey6DetailTableTrs[1].SelectSingleNode("./td").GetDirectInnerText().TrimEmpty();
-                            result.Add(subKey6_2, subValue6_2);
-                            Console.WriteLine($"Key:{subKey6_2}\tValue:{subValue6_2}");
-                            SetValue(ref 是否提供電子領標Po, subKey6_2, subValue6_2);
+                            var subValue6 = detailTableTrs[i].SelectSingleNode("./td").GetDirectInnerText().Split("：")[1].TrimEmpty();
+                            result.Add(subKey6, subValue6);
+                            Console.WriteLine($"Key:{subKey6}\tValue:{subValue6}");
+                            SetValue(ref 是否提供電子領標Po, subKey6, subValue6);
+                            // --------------------------------------------------
+                            if (subValue6 == "是")
+                            {
+                                var subKey6DetailTableTrs = detailTableTrs[i].SelectSingleNode("./td").SelectNodes("./table/tr");
+                                // 招標文件領取地點
+                                var subKey6_1 = subKey6DetailTableTrs[0].SelectSingleNode("./th/strong").GetDirectInnerText().TrimEmpty();
+                                var subValue6_1 = subKey6DetailTableTrs[0].SelectSingleNode("./td").GetDirectInnerText().TrimEmpty();
+                                result.Add(subKey6_1, subValue6_1);
+                                Console.WriteLine($"Key:{subKey6_1}\tValue:{subValue6_1}");
+                                SetValue(ref 是否提供電子領標Po, subKey6_1, subValue6_1);
+                                // 招標文件售價及付款方式
+                                var subKey6_2 = subKey6DetailTableTrs[1].SelectSingleNode("./th/strong").GetDirectInnerText().TrimEmpty();
+                                var subValue6_2 = subKey6DetailTableTrs[1].SelectSingleNode("./td").GetDirectInnerText().TrimEmpty();
+                                result.Add(subKey6_2, subValue6_2);
+                                Console.WriteLine($"Key:{subKey6_2}\tValue:{subValue6_2}");
+                                SetValue(ref 是否提供電子領標Po, subKey6_2, subValue6_2);
+                            }
                         }
                         // ==================================================
                         領投開標Po.是否提供電子領標Po = 是否提供電子領標Po;

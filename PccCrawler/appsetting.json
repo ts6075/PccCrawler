@@ -4,7 +4,7 @@
     },
     "HttpOption": {
         "Mode": "Debug",
-        "Mock招標公告列表": "./Mock/招標公告列表.html",
-        "Mock招標公告資料": "./Mock/招標公告資料.html"
+        "Mock招標公告列表": "./Mock/招標公告/招標公告列表.html",
+        "Mock招標公告資料": "./Mock/招標公告/招標公告資料02.html"
     }
 }

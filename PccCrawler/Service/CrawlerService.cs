@@ -70,13 +70,22 @@ namespace PccCrawler.Service
                 var stopWatch = new Stopwatch();
                 var analyzeService = new AnalyzeService();
                 var allDatas = new List<Dictionary<string, string>>();
+                var 招標公告Pos = new List<招標公告Po>();
                 foreach (var pk in pks)
                 {
                     stopWatch.Reset();
                     stopWatch.Start();
                     Console.WriteLine($"Crawling Detail:{pk}...");
                     var detailDoc = await GetDetailHtmlDoc(pk);
-                    var po = analyzeService.Analyze<招標公告Po>(detailDoc);
+                    try
+                    {
+                        var po = analyzeService.Analyze<招標公告Po>(detailDoc);
+                        招標公告Pos.Add(po);
+                    }
+                    catch (Exception ex)
+                    {
+                        ;
+                    }
 
                     stopWatch.Stop();
                     int totalSeconds = (int)stopWatch.Elapsed.TotalSeconds;
@@ -91,7 +100,7 @@ namespace PccCrawler.Service
                         Thread.Sleep((15 - totalSeconds) * 1000);
                     }
                 }
-                WriteExcel($"{Environment.CurrentDirectory}/output/{radProctrgCate}.xls", allDatas);
+                WriteExcel($"{Environment.CurrentDirectory}/output/{radProctrgCate}.xls", 招標公告Pos);
             }
             Console.WriteLine("Writing to file...");
             Console.WriteLine("End");
@@ -188,6 +197,77 @@ namespace PccCrawler.Service
             }
             FileStream fileStream = new FileStream(savePath, FileMode.Create, FileAccess.Write);
             wb.Write(fileStream);
+        }
+
+        private void WriteExcel<T>(string savePath, List<T> list)
+        {
+            IWorkbook wb = new XSSFWorkbook();
+            ISheet sheet = wb.CreateSheet(nameof(T));
+
+            //key
+            var rowIndex = 0;
+            var columnIndex = 0;
+            var row = sheet.CreateRow(rowIndex);
+            foreach (var key in GetAllPropertiesName(typeof(T)))
+            {
+                var cell = row.CreateCell(columnIndex);
+                cell.SetCellValue(key);
+                sheet.AutoSizeColumn(columnIndex);
+                columnIndex++;
+            }
+            rowIndex++;
+            row = sheet.CreateRow(rowIndex);
+            //value
+            foreach (var obj in list)
+            {
+                row = sheet.CreateRow(rowIndex);
+                SetExcelOneRow(sheet, row, obj);
+                rowIndex++;
+            }
+            if (!Directory.Exists(savePath))
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(savePath));
+            }
+            FileStream fileStream = new FileStream(savePath, FileMode.Create, FileAccess.Write);
+            wb.Write(fileStream);
+        }
+
+        private List<string> GetAllPropertiesName(Type type)
+        {
+            var result = new List<string>();
+            foreach (var prop in type.GetProperties())
+            {
+                if (prop.PropertyType == typeof(string))
+                {
+                    result.Add(prop.Name);
+                }
+                else
+                {
+                    result = result.Concat(GetAllPropertiesName(prop.PropertyType)).ToList();
+                }
+            }
+            return result;
+        }
+
+        private void SetExcelOneRow<T>(ISheet sheet, IRow row, T obj)
+        {
+            foreach (var prop in obj.GetType().GetProperties())
+            {
+                if (prop.PropertyType == typeof(string))
+                {
+                    var value = (string)prop.GetValue(obj);
+                    var columnIndex = sheet.GetRow(0).First(x => x.StringCellValue == prop.Name).ColumnIndex;
+                    row.CreateCell(columnIndex).SetCellValue(value);
+                }
+                else
+                {
+                    var propValueObj = obj.GetType().GetProperty(prop.Name).GetValue(obj);
+                    if (propValueObj != null)
+                    {
+                        SetExcelOneRow(sheet, row, propValueObj);
+                    }
+                }
+            }
         }
     }
 }
