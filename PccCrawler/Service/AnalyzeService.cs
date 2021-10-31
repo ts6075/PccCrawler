@@ -28,8 +28,7 @@ namespace PccCrawler.Service
             var detailTrNodes = detailDoc.GetElementbyId("print_area")?.SelectNodes("./table/tr");
             if (detailTrNodes == null)
             {
-                Console.WriteLine("Get Detail Fail");
-                return default;
+                throw new Exception("Get Detail Fail");
             }
             var region1 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_1").ToList();
             var region2 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_2").ToList();
@@ -44,10 +43,9 @@ namespace PccCrawler.Service
                 var ths = trNode.SelectNodes("./th");
                 if (ths.Count != 1)
                 {
-                    Console.WriteLine($"程式終止:檢測到未處理的特殊欄位，請通知工程師進行例外處理，參數:{Environment.NewLine}" +
-                                      $"ths.Count:{ths.Count}{Environment.NewLine}" +
-                                      $"InnerHtml:{trNode.InnerHtml}{Environment.NewLine}");
-                    break;
+                    throw new Exception($"程式終止:檢測到未處理的特殊欄位，請通知工程師進行例外處理，參數:{Environment.NewLine}" +
+                                        $"ths.Count:{ths.Count}{Environment.NewLine}" +
+                                        $"InnerHtml:{trNode.InnerHtml}{Environment.NewLine}");
                 }
                 else
                 {
@@ -71,10 +69,9 @@ namespace PccCrawler.Service
                 }
                 else
                 {
-                    Console.WriteLine($"程式終止:檢測到未處理的特殊欄位，請通知工程師進行例外處理，參數:{Environment.NewLine}" +
-                                      $"tds.Count:{tds.Count}{Environment.NewLine}" +
-                                      $"InnerHtml:{trNode.InnerHtml}{Environment.NewLine}");
-                    break;
+                    throw new Exception($"程式終止:檢測到未處理的特殊欄位，請通知工程師進行例外處理，參數:{Environment.NewLine}" +
+                                        $"tds.Count:{tds.Count}{Environment.NewLine}" +
+                                        $"InnerHtml:{trNode.InnerHtml}{Environment.NewLine}");
                 }
                 result.Add(key, value);
                 Console.WriteLine($"Key:{key}\tValue:{value}");
@@ -88,10 +85,9 @@ namespace PccCrawler.Service
                 var ths = trNode.SelectNodes("./th");
                 if (ths.Count != 1)
                 {
-                    Console.WriteLine($"程式終止:檢測到未處理的特殊欄位，請通知工程師進行例外處理，參數:{Environment.NewLine}" +
-                                      $"ths.Count:{ths.Count}{Environment.NewLine}" +
-                                      $"InnerHtml:{trNode.InnerHtml}{Environment.NewLine}");
-                    break;
+                    throw new Exception($"程式終止:檢測到未處理的特殊欄位，請通知工程師進行例外處理，參數:{Environment.NewLine}" +
+                                        $"ths.Count:{ths.Count}{Environment.NewLine}" +
+                                        $"InnerHtml:{trNode.InnerHtml}{Environment.NewLine}");
                 }
                 else
                 {
@@ -100,9 +96,10 @@ namespace PccCrawler.Service
 
                 var normalList = new string[]
                 {
-                    "標案名稱", "財物採購性質", "採購金額級距", "辦理方式", "依據法條",
+                    "標案名稱", "工程計畫編號", "本採購案是否屬於建築工程", "財物採購性質", "採購金額級距", "辦理方式", "依據法條",
+                    "是否採用電子競價", "是否為商業財物或服務",
                     "本採購是否屬「具敏感性或國安(含資安)疑慮之業務範疇」採購", "本採購是否屬「涉及國家安全」採購",
-                    "預算金額", "預算金額是否公開", "後續擴充", "是否受機關補助", "是否含特別預算"
+                    "預算金額", "預算金額是否公開", "預計金額", "預計金額是否公開", "是否受機關補助", "是否含特別預算"
                 };
                 var tds = trNode.SelectNodes("./td");
                 if (key == "標案案號" && tds.Count == 2)
@@ -148,17 +145,28 @@ namespace PccCrawler.Service
                     // ==================================================
                     採購資料Po.是否適用條約或協定之採購 = 是否適用條約或協定之採購Po;
                 }
+                else if (key == "後續擴充" && tds.Count == 1)
+                {
+                    value = tds.First().GetDirectInnerText().TrimEmpty();
+                    SetValue(ref 採購資料Po, key, value);
+                    // --------------------------------------------------
+                    if (value == "是")
+                    {
+                        var detailDiv = tds.First().SelectSingleNode("./div");
+                        value += "\r\n" + detailDiv.InnerHtml.TrimEmpty().Replace("<br>", "\r\n").Replace(" ", string.Empty);
+                        SetValue(ref 採購資料Po, key, value);
+                    }
+                }
                 else if (normalList.Contains(key) && tds.Count == 1)
                 {
-                    value = tds.First().GetDirectInnerText().Replace("<br>", string.Empty).TrimEmpty();
+                    value = tds.First().GetDirectInnerText().TrimEmpty();
                     SetValue(ref 採購資料Po, key, value);
                 }
                 else
                 {
-                    Console.WriteLine($"程式終止:檢測到未處理的特殊欄位，請通知工程師進行例外處理，參數:{Environment.NewLine}" +
-                                      $"tds.Count:{tds.Count}{Environment.NewLine}" +
-                                      $"InnerHtml:{trNode.InnerHtml}{Environment.NewLine}");
-                    break;
+                    throw new Exception($"程式終止:檢測到未處理的特殊欄位，請通知工程師進行例外處理，參數:{Environment.NewLine}" +
+                                        $"tds.Count:{tds.Count}{Environment.NewLine}" +
+                                        $"InnerHtml:{trNode.InnerHtml}{Environment.NewLine}");
                 }
 
                 if (!string.IsNullOrEmpty(key) && !string.IsNullOrEmpty(value))
@@ -176,10 +184,9 @@ namespace PccCrawler.Service
                 var ths = trNode.SelectNodes("./th");
                 if (ths.Count != 1)
                 {
-                    Console.WriteLine($"程式終止:檢測到未處理的特殊欄位，請通知工程師進行例外處理，參數:{Environment.NewLine}" +
-                                      $"ths.Count:{ths.Count}{Environment.NewLine}" +
-                                      $"InnerHtml:{trNode.InnerHtml}{Environment.NewLine}");
-                    break;
+                    throw new Exception($"程式終止:檢測到未處理的特殊欄位，請通知工程師進行例外處理，參數:{Environment.NewLine}" +
+                                        $"ths.Count:{ths.Count}{Environment.NewLine}" +
+                                        $"InnerHtml:{trNode.InnerHtml}{Environment.NewLine}");
                 }
                 else
                 {
@@ -188,8 +195,9 @@ namespace PccCrawler.Service
 
                 var normalList = new string[]
                 {
-                    "是否依政府採購法施行細則第64條之2辦理", "新增公告傳輸次數", "招標狀態", "公告日",
-                    "是否複數決標", "是否訂有底價", "是否屬特殊採購", "是否已辦理公開閱覽", "是否屬統包", "是否屬共同供應契約採購",
+                    "是否依政府採購法施行細則第64條之2辦理", "是否電子報價", "新增公告傳輸次數", "招標狀態", "公告日",
+                    "是否複數決標", "是否訂有底價", "價格是否納入評選", "所占配分或權重是否為20%以上",
+                    "是否屬特殊採購", "是否已辦理公開閱覽", "是否屬統包", "是否屬共同供應契約採購",
                     "是否屬二以上機關之聯合採購(不適用共同供應契約規定)", "是否應依公共工程專業技師簽證規則實施技師簽證",
                     "是否採行協商措施", "是否適用採購法第104條或105條或招標期限標準第10條或第4條之1",
                     "是否依據採購法第106條第1項第1款辦理"
@@ -212,10 +220,9 @@ namespace PccCrawler.Service
                 }
                 else
                 {
-                    Console.WriteLine($"程式終止:檢測到未處理的特殊欄位，請通知工程師進行例外處理，參數:{Environment.NewLine}" +
-                                      $"tds.Count:{tds.Count}{Environment.NewLine}" +
-                                      $"InnerHtml:{trNode.InnerHtml}{Environment.NewLine}");
-                    break;
+                    throw new Exception($"程式終止:檢測到未處理的特殊欄位，請通知工程師進行例外處理，參數:{Environment.NewLine}" +
+                                        $"tds.Count:{tds.Count}{Environment.NewLine}" +
+                                        $"InnerHtml:{trNode.InnerHtml}{Environment.NewLine}");
                 }
 
                 if (!string.IsNullOrEmpty(key) && !string.IsNullOrEmpty(value))
@@ -233,10 +240,9 @@ namespace PccCrawler.Service
                 var ths = trNode.SelectNodes("./th");
                 if (ths.Count != 1)
                 {
-                    Console.WriteLine($"程式終止:檢測到未處理的特殊欄位，請通知工程師進行例外處理，參數:{Environment.NewLine}" +
-                                      $"ths.Count:{ths.Count}{Environment.NewLine}" +
-                                      $"InnerHtml:{trNode.InnerHtml}{Environment.NewLine}");
-                    break;
+                    throw new Exception($"程式終止:檢測到未處理的特殊欄位，請通知工程師進行例外處理，參數:{Environment.NewLine}" +
+                                        $"ths.Count:{ths.Count}{Environment.NewLine}" +
+                                        $"InnerHtml:{trNode.InnerHtml}{Environment.NewLine}");
                 }
                 else
                 {
@@ -355,10 +361,9 @@ namespace PccCrawler.Service
                 }
                 else
                 {
-                    Console.WriteLine($"程式終止:檢測到未處理的特殊欄位，請通知工程師進行例外處理，參數:{Environment.NewLine}" +
-                                      $"tds.Count:{tds.Count}{Environment.NewLine}" +
-                                      $"InnerHtml:{trNode.InnerHtml}{Environment.NewLine}");
-                    break;
+                    throw new Exception($"程式終止:檢測到未處理的特殊欄位，請通知工程師進行例外處理，參數:{Environment.NewLine}" +
+                                        $"tds.Count:{tds.Count}{Environment.NewLine}" +
+                                        $"InnerHtml:{trNode.InnerHtml}{Environment.NewLine}");
                 }
 
                 if (!string.IsNullOrEmpty(key) && !string.IsNullOrEmpty(value))
@@ -376,10 +381,9 @@ namespace PccCrawler.Service
                 var ths = trNode.SelectNodes("./th");
                 if (ths.Count != 1)
                 {
-                    Console.WriteLine($"程式終止:檢測到未處理的特殊欄位，請通知工程師進行例外處理，參數:{Environment.NewLine}" +
-                                      $"ths.Count:{ths.Count}{Environment.NewLine}" +
-                                      $"InnerHtml:{trNode.InnerHtml}{Environment.NewLine}");
-                    break;
+                    throw new Exception($"程式終止:檢測到未處理的特殊欄位，請通知工程師進行例外處理，參數:{Environment.NewLine}" +
+                                       $"ths.Count:{ths.Count}{Environment.NewLine}" +
+                                       $"InnerHtml:{trNode.InnerHtml}{Environment.NewLine}");
                 }
                 else
                 {
@@ -389,7 +393,7 @@ namespace PccCrawler.Service
                 var normalList = new string[]
                 {
                     "履約地點", "履約期限", "是否刊登公報", "本案採購契約是否採用主管機關訂定之範本",
-                    "是否訂有與履約能力有關之基本資格", "是否刊登英文公告"
+                    "是否屬災區重建工程", "是否刊登英文公告"
                 };
                 var tds = trNode.SelectNodes("./td");
                 if (key == "是否依據採購法第99條" && tds.Count == 2)
@@ -401,6 +405,30 @@ namespace PccCrawler.Service
                 {
                     value = tds.First().SelectSingleNode("./table/tr/td").GetDirectInnerText().TrimEmpty();
                     SetValue(ref 其他Po, key, value);
+                }
+                else if (key == "是否訂有與履約能力有關之基本資格" && tds.Count == 1)
+                {
+                    value = tds.First().GetDirectInnerText().TrimEmpty();
+                    SetValue(ref 其他Po, key, value);
+                    // --------------------------------------------------
+                    if (value == "是")
+                    {
+                        var detailDiv = tds.First().SelectSingleNode("./div");
+                        value += "\r\n" + detailDiv.InnerHtml.TrimEmpty().Replace("<br>", "\r\n").Replace(" ", string.Empty);
+                        SetValue(ref 其他Po, key, value);
+                    }
+                }
+                else if (key == "是否訂有與履約能力有關之特定資格" && tds.Count == 1)
+                {
+                    value = tds.First().GetDirectInnerText().TrimEmpty();
+                    SetValue(ref 其他Po, key, value);
+                    // --------------------------------------------------
+                    if (value == "是")
+                    {
+                        var detailDiv = tds.First().SelectSingleNode("./div");
+                        value += "\r\n" + detailDiv.InnerHtml.TrimEmpty().Replace("<br>", "\r\n").Replace(" ", string.Empty);
+                        SetValue(ref 其他Po, key, value);
+                    }
                 }
                 else if (key == "附加說明" && tds.Count == 1)
                 {
@@ -444,10 +472,9 @@ namespace PccCrawler.Service
                 }
                 else
                 {
-                    Console.WriteLine($"程式終止:檢測到未處理的特殊欄位，請通知工程師進行例外處理，參數:{Environment.NewLine}" +
-                                      $"tds.Count:{tds.Count}{Environment.NewLine}" +
-                                      $"InnerHtml:{trNode.InnerHtml}{Environment.NewLine}");
-                    break;
+                    throw new Exception($"程式終止:檢測到未處理的特殊欄位，請通知工程師進行例外處理，參數:{Environment.NewLine}" +
+                                        $"tds.Count:{tds.Count}{Environment.NewLine}" +
+                                       $"InnerHtml:{trNode.InnerHtml}{Environment.NewLine}");
                 }
 
                 if (!string.IsNullOrEmpty(key) && !string.IsNullOrEmpty(value))
@@ -480,12 +507,10 @@ namespace PccCrawler.Service
             PropertyInfo? prop = propType.GetProperty(propName);
             if (prop == null)
             {
-                var errorMsg = $"程式終止:檢測到未處理的特殊欄位，請通知工程師進行例外處理，參數:{Environment.NewLine}" +
-                               $"po:{po.GetType()}{Environment.NewLine}" +
-                               $"propertyName:{propertyName}{Environment.NewLine}" +
-                               $"value:{value}{Environment.NewLine}";
-                Console.WriteLine(errorMsg);
-                throw new Exception(errorMsg);
+                throw new Exception($"程式終止:檢測到未處理的特殊欄位，請通知工程師進行例外處理，參數:{Environment.NewLine}" +
+                                    $"po:{po.GetType()}{Environment.NewLine}" +
+                                    $"propertyName:{propertyName}{Environment.NewLine}" +
+                                    $"value:{value}{Environment.NewLine}");
             }
             else
             {
@@ -495,7 +520,7 @@ namespace PccCrawler.Service
             // Replace特殊字元
             string GetPropertyName(string key)
             {
-                new List<string> { "「", "(", ")", "」", "、" }.ForEach(x =>
+                new List<string> { "「", "(", ")", "」", "、", "%" }.ForEach(x =>
                 {
                     key = key.Replace(x, "_");
                 });

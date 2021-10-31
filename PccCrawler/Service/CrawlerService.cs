@@ -31,7 +31,7 @@ namespace PccCrawler.Service
              */
             Console.WriteLine("Start");
             Console.WriteLine("Search Database...");
-            var dao = new SQLiteService($"{Environment.CurrentDirectory}/data/db.db");
+            var dao = new SQLiteService($"{Environment.CurrentDirectory}/data/db2.db");
             var masterList = dao.GetList<PccMasterPo>("PccMaster");
             foreach (var radProctrgCate in new RadProctrgCate[] { RadProctrgCate.工程, RadProctrgCate.財物, RadProctrgCate.勞務 })
             {
@@ -59,10 +59,17 @@ namespace PccCrawler.Service
                         var hrefNode = trNodes[i].SelectSingleNode("./td[4]/a");
                         var href = hrefNode.GetAttributeValue("href", null);
                         var pk = href.Contains("primaryKey=") ? href.Split("primaryKey=")[1] : "";
-                        // 只加入未曾爬取過的資料
-                        if (!masterList.Where(x => x.Status != 900).Select(x => x.Id).Contains(pk))
+                        // 檢查資料是否曾爬取過
+                        if (!masterList.Any(x => x.Status == 900 && x.Id == pk))
                         {
-                            dao.Execute($"insert into PccMaster (Id, Url, Status) values ({pk}, '{GetUrl(UrlType.tpam_tender_detail, pk)}', 100) ");
+                            if (masterList.Any(x => x.Id == pk))
+                            {
+                                dao.Execute($"update PccMaster set Id = {pk}, Url ='{GetUrl(UrlType.tpam_tender_detail, pk)}', Status = 100 where Id = {pk}");
+                            }
+                            else
+                            {
+                                dao.Execute($"insert into PccMaster (Id, Url, Status) values ({pk}, '{GetUrl(UrlType.tpam_tender_detail, pk)}', 100) ");
+                            }
                             pks.Add(pk);
                         }
                     }
@@ -82,11 +89,18 @@ namespace PccCrawler.Service
                     stopWatch.Reset();
                     stopWatch.Start();
                     Console.WriteLine($"Crawling Detail:{pk}...");
-                    var detailDoc = await GetDetailHtmlDoc(pk);
-                    var po = analyzeService.Analyze<招標公告Po>(detailDoc);
-                    po.Url = GetUrl(UrlType.tpam_tender_detail, pk);
-                    招標公告Pos.Add(po);
-
+                    try
+                    {
+                        var detailDoc = await GetDetailHtmlDoc(pk);
+                        var po = analyzeService.Analyze<招標公告Po>(detailDoc);
+                        po.Url = GetUrl(UrlType.tpam_tender_detail, pk);
+                        招標公告Pos.Add(po);
+                        dao.Execute($"update PccMaster set Status = 900 where Id = {pk} ");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.Message);
+                    }
                     stopWatch.Stop();
                     int totalSeconds = (int)stopWatch.Elapsed.TotalSeconds;
                     Console.WriteLine("RunTime:" + totalSeconds);
@@ -99,9 +113,8 @@ namespace PccCrawler.Service
                         Console.WriteLine($"Use time is too short, a little delay:{15 - totalSeconds}");
                         Thread.Sleep((_options.IntervalSeconds - totalSeconds) * 1000);
                     }
-                    GetUrl(UrlType.tpam_tender_detail, pk);
                 }
-                WriteExcel($"{Environment.CurrentDirectory}/output/{radProctrgCate}.xls", 招標公告Pos);
+                WriteExcel($"{Environment.CurrentDirectory}/output/{radProctrgCate}.xlsx", 招標公告Pos);
             }
             Console.WriteLine("Writing to file...");
             Console.WriteLine("End");
@@ -170,7 +183,7 @@ namespace PccCrawler.Service
         private void WriteExcel<T>(string savePath, List<T> list)
         {
             IWorkbook wb = new XSSFWorkbook();
-            ISheet sheet = wb.CreateSheet(nameof(T));
+            ISheet sheet = wb.CreateSheet(Path.GetFileNameWithoutExtension(savePath));
 
             //key
             var rowIndex = 0;

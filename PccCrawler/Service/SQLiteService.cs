@@ -31,6 +31,10 @@ namespace PccCrawler.Service
             {
                 File.Delete(_databaseName);
             }
+            if (!Directory.Exists(_databaseName))
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(_databaseName));
+            }
             SQLiteConnection.CreateFile(_databaseName);
             Execute("CREATE TABLE IF NOT EXISTS PccMaster( Id varchar(10), Url TEXT, Status int ) ");
         }

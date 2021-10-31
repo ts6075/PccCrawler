@@ -35,10 +35,14 @@
         public string? 辦理方式 { get; set; }
         public string? 依據法條 { get; set; }
         public 是否適用條約或協定之採購? 是否適用條約或協定之採購 { get; set; }
+        public string? 是否採用電子競價 { get; set; }
+        public string? 是否為商業財物或服務 { get; set; }
         public string? 本採購是否屬_具敏感性或國安_含資安_疑慮之業務範疇_採購 { get; set; }
         public string? 本採購是否屬_涉及國家安全_採購 { get; set; }
         public string? 預算金額 { get; set; }
         public string? 預算金額是否公開 { get; set; }
+        public string? 預計金額 { get; set; }
+        public string? 預計金額是否公開 { get; set; }
         public string? 後續擴充 { get; set; }
         public string? 是否受機關補助 { get; set; }
         public string? 是否含特別預算 { get; set; }
@@ -59,11 +63,14 @@
         public string? 招標方式 { get; set; }
         public string? 決標方式 { get; set; }
         public string? 是否依政府採購法施行細則第64條之2辦理 { get; set; }
+        public string? 是否電子報價 { get; set; }
         public string? 新增公告傳輸次數 { get; set; }
         public string? 招標狀態 { get; set; }
         public string? 公告日 { get; set; }
         public string? 是否複數決標 { get; set; }
         public string? 是否訂有底價 { get; set; }
+        public string? 價格是否納入評選 { get; set; }
+        public string? 所占配分或權重是否為20_以上{ get; set; }
         public string? 是否屬特殊採購 { get; set; }
         public string? 是否已辦理公開閱覽 { get; set; }
         public string? 是否屬統包 { get; set; }
@@ -111,6 +118,7 @@
         public string? 是否屬災區重建工程 { get; set; }
         public string? 廠商資格摘要 { get; set; }
         public string? 是否訂有與履約能力有關之基本資格 { get; set; }
+        public string? 是否訂有與履約能力有關之特定資格 { get; set; }
         public string? 附加說明 { get; set; }
         public string? 是否刊登英文公告 { get; set; }
         public 疑義_異議_申訴及檢舉受理單位? 疑義_異議_申訴及檢舉受理單位 { get; set; }

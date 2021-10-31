@@ -31,10 +31,7 @@
     <None Update="Mock\招標公告\招標公告列表.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Mock\招標公告\招標公告資料01.html">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Mock\招標公告\招標公告資料02.html">
+    <None Update="Mock\招標公告\招標公告資料.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
