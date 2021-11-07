@@ -2,6 +2,7 @@
     [Id]          INT            NOT NULL,
     [Name]        NVARCHAR (50)  NOT NULL,
     [HtmlContent] NVARCHAR (MAX) NULL,
+    [CreateTime] DATETIME NOT NULL DEFAULT getdate(), 
     CONSTRAINT [PK_PccInfo] PRIMARY KEY CLUSTERED ([Id], [Name])
 );
 
@@ -14,3 +15,6 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'欄位名�
 
 GO
 EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'欄位Html資訊', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'PccInfo', @level2type = N'COLUMN', @level2name = N'HtmlContent';
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'建立時間', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'PccInfo', @level2type = N'COLUMN', @level2name = N'CreateTime';

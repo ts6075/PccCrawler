@@ -1,29 +1,25 @@
 ﻿namespace PccCrawler.Model
 {
     /// <summary>
-    /// PccMaster Table Po
+    /// PccInfo Table Po
     /// </summary>
-    public class PccMasterPo
+    public class PccInfoPo
     {
         /// <summary>
         /// 識別碼
         /// </summary>
         public string Id { get; set; } = null!;
         /// <summary>
-        /// Url
+        /// 欄位名稱
         /// </summary>
-        public string? Url { get; set; }
+        public string Name { get; set; } = null!;
         /// <summary>
-        /// 狀態 100:進行中 900:完成
+        /// 欄位Html資訊
         /// </summary>
-        public int Status { get; set; }
+        public string? HtmlContent { get; set; }
         /// <summary>
         /// 建立時間
         /// </summary>
         public DateTime CreateTime { get; set; }
-        /// <summary>
-        /// 更新時間
-        /// </summary>
-        public DateTime UpdateTime { get; set; }
     }
 }

@@ -4,7 +4,7 @@
         "MSSQLConn": "Server=localhost;Database=Pcc;Trusted_Connection=True;"
     },
     "CrawlerOption": {
-        "Mode": "Release",
+        "Mode": "Debug",
         /*--間隔秒數--*/
         "IntervalSeconds": 15,
         "RadProctrgCates": [
@@ -14,7 +14,7 @@
         ]
     },
     "HttpOption": {
-        "Mode": "Release",
+        "Mode": "Debug",
         "Mock招標公告列表": "./Mock/招標公告/招標公告列表.html",
         "Mock招標公告資料": "./Mock/招標公告/招標公告資料.html"
     }

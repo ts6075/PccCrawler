@@ -1,8 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PccCrawler.Model;
-using PccCrawler.Process;
-using PccCrawler.Process.Interface;
 using PccCrawler.Service;
 using PccCrawler.Service.Interface;
 using System.Data;
@@ -47,8 +45,9 @@ namespace PccCrawler
             {
                 services.AddTransient<IHttpService, HttpService>();
             }
+            services.AddTransient<I招標公告Service, 招標公告Service>();
+            services.AddTransient<IAnalyzeService, AnalyzeService>();
             // DI Process
-            services.AddTransient<I招標公告Process, 招標公告Process>();
             // DI Dao
             services.AddScoped<IDbConnection, SqlConnection>(serviceProvider => {
                 //var connString = configuration.GetConnectionString("DefaultConnection");

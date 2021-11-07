@@ -1,12 +1,77 @@
 ﻿using HtmlAgilityPack;
 using PccCrawler.Extension;
-using PccCrawler.Model;
-using System.Reflection;
+using PccCrawler.Service.Interface;
 
 namespace PccCrawler.Service
 {
-    public class AnalyzeService
+    public class AnalyzeService : IAnalyzeService
     {
+        private readonly DaoService _dao;
+
+        public AnalyzeService(DaoService dao)
+        {
+            _dao = dao;
+        }
+
+        public void Analyze招標公告(HtmlDocument detailDoc)
+        {
+            var url = detailDoc.DocumentNode.SelectNodes("/html/head/meta")
+                                           .First(x => x.GetAttributeValue("property", null) == "og:url")
+                                           .GetAttributeValue("content", string.Empty);
+            var pk = url.Contains("primaryKey=") ? url.Split("primaryKey=")[1].Split('&')[0] : string.Empty;
+            var detailTrNodes = detailDoc.GetElementbyId("print_area")?.SelectNodes("./table/tr");
+            if (detailTrNodes == null)
+            {
+                throw new Exception("Get Detail Fail");
+            }
+            var region1 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_1").ToList(); // 機關資料
+            var region2 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_2").ToList(); // 採購資料
+            var region3 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_3").ToList(); // 招標資料
+            var region4 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_4").ToList(); // 領投開標
+            var region5 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_5").ToList(); // 其他
+            var region8 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_8").ToList(); // TODO: 文件上傳類 53613387
+            _dao.Query<int>($"delete PccInfo where Id = {pk}");
+            foreach (var trNode in detailTrNodes)
+            {
+                var key = "";
+                var value = "";
+                var ths = trNode.SelectNodes("./th");
+                if (ths.Count != 1)
+                {
+                    throw new Exception($"程式終止:檢測到未處理的特殊欄位，請通知工程師進行例外處理，參數:{Environment.NewLine}" +
+                                        $"ths.Count:{ths.Count}{Environment.NewLine}" +
+                                        $"InnerHtml:{trNode.InnerHtml}{Environment.NewLine}");
+                }
+                else
+                {
+                    key = ths.First().GetDirectInnerText().TrimEmpty();
+                }
+
+                var tds = trNode.SelectNodes("./td");
+                var specialList = new string[]
+                {
+                    "機關代碼", "標案案號", "招標方式",
+                    "是否提供電子領標", "是否依據採購法第99條"
+                };
+                if (specialList.Contains(key) && tds.Count == 2)
+                {
+                    value = tds.Skip(1).First().InnerHtml.TrimEmpty();
+                }
+                else
+                {
+                    value = tds.First().InnerHtml.TrimEmpty();
+                }
+                _dao.Query<int>($"insert into PccInfo(Id, Name, HtmlContent) values({pk}, '{key}', '{value}')");
+                Console.WriteLine($"Key:{key}\tValue:{value}");
+            }
+        }
+
+        #region [已過時]完全強型處理所有欄位判斷
+        /*
+        [Obsolete]
+        public AnalyzeService() { }
+
+        [Obsolete]
         public PoType Analyze<PoType>(HtmlDocument htmlNodes)
         {
             if (typeof(PoType) == typeof(招標公告Po))
@@ -16,6 +81,7 @@ namespace PccCrawler.Service
             return default;
         }
 
+        [Obsolete]
         private 招標公告Po Analyze招標公告(HtmlDocument detailDoc)
         {
             var po = new 招標公告Po();
@@ -522,6 +588,7 @@ namespace PccCrawler.Service
         /// <param name="po">反射物件</param>
         /// <param name="propertyName"></param>
         /// <param name="value"></param>
+        [Obsolete]
         private void SetValue<T>(ref T po, string propertyName, string value)
         {
             var propType = po.GetType();
@@ -549,6 +616,7 @@ namespace PccCrawler.Service
                 return key;
             }
         }
-
+        */
+        #endregion
     }
 }

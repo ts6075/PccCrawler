@@ -3,6 +3,7 @@ using NPOI.XSSF.UserModel;
 
 namespace PccCrawler.Service
 {
+    [Obsolete]
     public class ExcelService
     {
         /// <summary>

@@ -1,15 +1,15 @@
 using PccCrawler.Model;
 using Microsoft.Extensions.Options;
-using PccCrawler.Process.Interface;
+using PccCrawler.Service.Interface;
 
 namespace PccCrawler.Service
 {
     public class CrawlerService
     {
         private readonly CrawlerOption _options;
-        private readonly I招標公告Process _招標公告Process;
+        private readonly I招標公告Service _招標公告Process;
 
-        public CrawlerService(IOptions<CrawlerOption> options, I招標公告Process 招標公告Process)
+        public CrawlerService(IOptions<CrawlerOption> options, I招標公告Service 招標公告Process)
         {
             _options = options.Value;
             _招標公告Process = 招標公告Process;

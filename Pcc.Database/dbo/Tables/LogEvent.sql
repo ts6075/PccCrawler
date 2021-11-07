@@ -4,7 +4,7 @@
     [EventType]    NVARCHAR (50)  NULL,
     [EventContent] NVARCHAR (MAX) NULL,
     [CaseId]       INT            NULL,
-    [CreateTime]   DATETIME       NULL,
+    [CreateTime]   DATETIME       NOT NULL DEFAULT getdate(),
     CONSTRAINT [PK__LogEvent__CA1E3C88D1881868] PRIMARY KEY CLUSTERED ([Seq] ASC)
 );
 

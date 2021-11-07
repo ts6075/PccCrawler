@@ -1,27 +1,26 @@
 ﻿using HtmlAgilityPack;
-using NPOI.SS.UserModel;
-using NPOI.XSSF.UserModel;
+using Microsoft.Extensions.Options;
 using PccCrawler.Model;
 using PccCrawler.PccEnum;
-using PccCrawler.Process.Interface;
-using PccCrawler.Service;
 using PccCrawler.Service.Interface;
 using System.Diagnostics;
 
-namespace PccCrawler.Process
+namespace PccCrawler.Service
 {
     // TODO: 待改為Chain-of-responsibility pattern
-    public class 招標公告Process : I招標公告Process
+    public class 招標公告Service : I招標公告Service
     {
         private readonly CrawlerOption _options;
         private readonly IHttpService _httpService;
         private readonly DaoService _dao;
+        private readonly IAnalyzeService _analyzeService;
 
-        public 招標公告Process(CrawlerOption options, IHttpService httpService, DaoService dao)
+        public 招標公告Service(IOptions<CrawlerOption> options, IHttpService httpService, DaoService dao, IAnalyzeService analyzeService)
         {
-            _options = options;
+            _options = options.Value;
             _httpService = httpService;
             _dao = dao;
+            _analyzeService = analyzeService;
         }
 
         public async Task DoJob()
@@ -31,6 +30,7 @@ namespace PccCrawler.Process
             {
                 Console.WriteLine($"Crawling List:招標公告-{radProctrgCate}...");
                 var pks = new List<string>();
+                #region 取得所有Url
                 var total = await GetTotalItem(radProctrgCate);
                 var totalPage = total switch
                 {
@@ -41,7 +41,7 @@ namespace PccCrawler.Process
                 };
                 for (var pageIndex = 1; pageIndex <= totalPage; pageIndex++)
                 {
-                    var doc = await GetHtmlDoc(pageIndex, radProctrgCate);
+                    var doc = await GetSearchHtmlDoc(pageIndex, radProctrgCate);
                     var trNodes = doc.GetElementbyId("print_area")?.SelectNodes("./table/tr");
                     if (trNodes == null)
                     {
@@ -50,19 +50,21 @@ namespace PccCrawler.Process
                     }
                     for (var i = 1; i < trNodes.Count - 1; i++)
                     {
+                        // 取得Url
                         var hrefNode = trNodes[i].SelectSingleNode("./td[4]/a");
                         var href = hrefNode.GetAttributeValue("href", null);
                         var pk = href.Contains("primaryKey=") ? href.Split("primaryKey=")[1] : "";
-                        // 檢查資料是否曾爬取過
-                        if (!masterList.Any(x => x.Status == 900 && x.Id == pk))
+                        // 檢查資料是否曾爬取過且成功
+                        if (!masterList.Any(x => x.Id == pk && x.Status == 900))
                         {
+                            var url = GetUrl(UrlType.招標公告_詳細資料頁, pk);
                             if (masterList.Any(x => x.Id == pk))
                             {
-                                _dao.Query<int>($"update PccMaster set Id = {pk}, Url ='{GetUrl(UrlType.tpam_tender_detail, pk)}', Status = 100 where Id = {pk}");
+                                _dao.Query<int>($"update PccMaster set Id = {pk}, Url ='{url}', Status = 100, UpdateTime = getdate() where Id = {pk}");
                             }
                             else
                             {
-                                _dao.Query<int>($"insert into PccMaster (Id, Url, Status) values ({pk}, '{GetUrl(UrlType.tpam_tender_detail, pk)}', 100)");
+                                _dao.Query<int>($"insert into PccMaster (Id, Url, Status) values ({pk}, '{url}', 100)");
                             }
                             pks.Add(pk);
                         }
@@ -74,10 +76,9 @@ namespace PccCrawler.Process
                     }
                 }
                 Console.WriteLine($"TotalItem: {total} count，NewItem: {pks.Count} count");
+                #endregion
 
                 var stopWatch = new Stopwatch();
-                var analyzeService = new AnalyzeService();
-                var 招標公告Pos = new List<招標公告Po>();
                 foreach (var pk in pks)
                 {
                     stopWatch.Reset();
@@ -86,71 +87,70 @@ namespace PccCrawler.Process
                     try
                     {
                         var detailDoc = await GetDetailHtmlDoc(pk);
-                        var po = analyzeService.Analyze<招標公告Po>(detailDoc);
-                        po.Url = GetUrl(UrlType.tpam_tender_detail, pk);
-                        招標公告Pos.Add(po);
+                        _analyzeService.Analyze招標公告(detailDoc);
                         _dao.Query<int>($"update PccMaster set Status = 900 where Id = {pk}");
                     }
                     catch (Exception ex)
                     {
                         Console.WriteLine($"PK: {pk} {Environment.NewLine}" +
                                           $"Msg: {ex.Message}");
-                        _dao.Query<int>($"insert into LogEvent (Id, EventContent) values ({pk}, '{ex.Message}')");
+                        // TODO: 參數化
+                        _dao.Query<int>($"insert into LogEvent(EventLevel ,EventType, EventContent, CaseId) " +
+                                        $"values('Error', 'EventType', '{ex.Message}', {pk})");
                     }
-                    stopWatch.Stop();
-                    int totalSeconds = (int)stopWatch.Elapsed.TotalSeconds;
-                    Console.WriteLine("RunTime:" + totalSeconds);
                     if (_options.Mode == "Debug")
                     {
                         break;
                     }
-                    if (totalSeconds < _options.IntervalSeconds)
+
+                    #region 延遲Request速度
+                    // 延遲Request速度
+                    stopWatch.Stop();
+                    var totalSeconds = (int)stopWatch.Elapsed.TotalSeconds;
+                    var intervalSeconds = _options.IntervalSeconds;
+                    if (totalSeconds < intervalSeconds)
                     {
-                        Console.WriteLine($"Use time is too short, a little delay:{_options.IntervalSeconds - totalSeconds}");
-                        Thread.Sleep((_options.IntervalSeconds - totalSeconds) * 1000);
+                        Console.WriteLine($"Use time is too short({totalSeconds * 1000}s), a little delay:{intervalSeconds - totalSeconds}s");
+                        Thread.Sleep((intervalSeconds - totalSeconds) * 1000);
                     }
+                    #endregion
                 }
-                new ExcelService().WriteExcel($"{Environment.CurrentDirectory}/output/{radProctrgCate}.xlsx", 招標公告Pos);
+                // 一律改存DB
+                //new ExcelService().WriteExcel($"{Environment.CurrentDirectory}/output/{radProctrgCate}.xlsx", 招標公告Pos);
             }
         }
 
         #region Done
+        /// <summary>
+        /// 取得Pcc網址
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="args"></param>
+        /// <returns></returns>
         private string GetUrl(UrlType type, params string[] args)
         {
             var domain = "https://web.pcc.gov.tw";
             var area = "tps";
-            var path = "pss/tender.do";
             var searchMode = SearchMode.common;
             var searchType = SearchType.advance;
             var url = type switch
             {
-                UrlType.tender => $"{domain}/{area}/{path}?searchMode={searchMode}&searchType={searchType}",
-                UrlType.tpam_tender_detail => $"{domain}/{area}/tpam/main/tps/tpam/tpam_tender_detail.do?searchMode={searchMode}&primaryKey={args[0]}",
-                _ => $"{domain}/{area}/{path}?searchMode={searchMode}&searchType={searchType}"
+                UrlType.招標公告_搜尋結果頁 => $"{domain}/{area}/pss/tender.do?searchMode={searchMode}&searchType={searchType}",
+                UrlType.招標公告_詳細資料頁 => $"{domain}/{area}/tpam/main/tps/tpam/tpam_tender_detail.do?searchMode={searchMode}&primaryKey={args[0]}",
+                _ => $"{domain}/{area}/pss/tender.do?searchMode={searchMode}&searchType={searchType}"
             };
             return url;
         }
 
-        private async Task<int> GetTotalItem(RadProctrgCate radProctrgCate)
+        /// <summary>
+        /// 取得搜尋結果頁Html
+        /// </summary>
+        /// <param name="pageIndex">頁碼</param>
+        /// <param name="radProctrgCate">標的分類</param>
+        /// <returns></returns>
+        public async Task<HtmlDocument> GetSearchHtmlDoc(int pageIndex, RadProctrgCate radProctrgCate)
         {
-            var url = GetUrl(UrlType.tender);
-            var formData = _httpService.GetFormData(new SearchVo
-            {
-                proctrgCate = (int)radProctrgCate,
-                radProctrgCate = (int)radProctrgCate
-            });
-            var resp = await _httpService.DoPostAsync(url, formData);
-            var doc = new HtmlDocument();
-            doc.LoadHtml(resp);
-
-            var totalStr = doc.GetElementbyId("print_area")?.SelectSingleNode(".//span[@class=\"T11b\"]")?.InnerText;
-            _ = int.TryParse(totalStr, out var total);
-            return total;
-        }
-
-        public async Task<HtmlDocument> GetHtmlDoc(int pageIndex, RadProctrgCate radProctrgCate)
-        {
-            var url = GetUrl(UrlType.tender);
+            var url = GetUrl(UrlType.招標公告_搜尋結果頁);
             var formData = _httpService.GetFormData(new SearchVo
             {
                 pageIndex = pageIndex,
@@ -163,9 +163,27 @@ namespace PccCrawler.Process
             return doc;
         }
 
+        /// <summary>
+        /// 取得搜尋結果總筆數
+        /// </summary>
+        /// <param name="radProctrgCate">標的分類</param>
+        /// <returns></returns>
+        private async Task<int> GetTotalItem(RadProctrgCate radProctrgCate)
+        {
+            var doc = await GetSearchHtmlDoc(1, radProctrgCate);
+            var totalStr = doc.GetElementbyId("print_area")?.SelectSingleNode(".//span[@class=\"T11b\"]")?.InnerText;
+            _ = int.TryParse(totalStr, out var total);
+            return total;
+        }
+
+        /// <summary>
+        /// 取得詳細資料頁Html
+        /// </summary>
+        /// <param name="pk">識別碼</param>
+        /// <returns></returns>
         public async Task<HtmlDocument> GetDetailHtmlDoc(string pk)
         {
-            var url = GetUrl(UrlType.tpam_tender_detail, pk);
+            var url = GetUrl(UrlType.招標公告_詳細資料頁, pk);
             var resp = await _httpService.DoGetAsync(url);
             var doc = new HtmlDocument();
             doc.LoadHtml(resp);
