@@ -1,11 +1,20 @@
 {
+    "ConnectionString": {
+        "SQLiteConn": "{{Environment.CurrentDirectory}}\\data",
+        "MSSQLConn": "Server=localhost;Database=Pcc;Trusted_Connection=True;"
+    },
     "CrawlerOption": {
-        "Mode": "Debug",
+        "Mode": "Release",
         /*--間隔秒數--*/
-        "IntervalSeconds": 15
+        "IntervalSeconds": 15,
+        "RadProctrgCates": [
+            "工程",
+            "財物",
+            "勞務"
+        ]
     },
     "HttpOption": {
-        "Mode": "Debug",
+        "Mode": "Release",
         "Mock招標公告列表": "./Mock/招標公告/招標公告列表.html",
         "Mock招標公告資料": "./Mock/招標公告/招標公告資料.html"
     }

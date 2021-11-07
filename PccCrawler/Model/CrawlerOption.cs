@@ -1,4 +1,6 @@
-﻿namespace PccCrawler.Model
+﻿using PccCrawler.PccEnum;
+
+namespace PccCrawler.Model
 {
     public class CrawlerOption
     {
@@ -11,5 +13,10 @@
         /// 間隔秒數
         /// </summary>
         public int IntervalSeconds { get; set; } = 15;
+
+        /// <summary>
+        /// 標的分類
+        /// </summary>
+        public RadProctrgCate[] RadProctrgCates { get; set; } = Array.Empty<RadProctrgCate>();
     }
 }

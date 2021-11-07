@@ -7,16 +7,19 @@ using NPOI.XSSF.UserModel;
 using PccCrawler.Service.Interface;
 using Microsoft.Extensions.Options;
 using System.Linq;
+using Microsoft.Extensions.Configuration;
 
 namespace PccCrawler.Service
 {
     public class CrawlerService
     {
+        private readonly string _sqliteConn;
         private readonly CrawlerOption _options;
         private readonly IHttpService _httpService;
 
-        public CrawlerService(IOptions<CrawlerOption> options, IHttpService httpService)
+        public CrawlerService(IConfiguration configuration, IOptions<CrawlerOption> options, IHttpService httpService)
         {
+            _sqliteConn = configuration.GetValue<string>("ConnectionString:SQLiteConn");
             _options = options.Value;
             _httpService = httpService;
         }
@@ -32,9 +35,9 @@ namespace PccCrawler.Service
              */
             Console.WriteLine("Start");
             Console.WriteLine("Search Database...");
-            var dao = new SQLiteService($"{Environment.CurrentDirectory}/data/db2.db");
+            var dao = new SQLiteService(_sqliteConn.Replace("{{Environment.CurrentDirectory}}", Environment.CurrentDirectory));
             var masterList = dao.GetList<PccMasterPo>("PccMaster");
-            foreach (var radProctrgCate in new RadProctrgCate[] { RadProctrgCate.工程, RadProctrgCate.財物, RadProctrgCate.勞務 })
+            foreach (var radProctrgCate in _options.RadProctrgCates)
             {
                 Console.WriteLine($"Crawling List:{radProctrgCate}...");
                 var pks = new List<string>();
