@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PccCrawler.Model;
+using PccCrawler.Process;
+using PccCrawler.Process.Interface;
 using PccCrawler.Service;
 using PccCrawler.Service.Interface;
 using System.Data;
@@ -30,10 +32,13 @@ namespace PccCrawler
         private static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
         {
             services.AddOptions();
+            // DI Config
             services.Configure<CrawlerOption>(configuration.GetSection(nameof(CrawlerOption)));
             services.Configure<HttpOption>(configuration.GetSection(nameof(HttpOption)));
-            services.AddTransient<CrawlerService>();
+            // DI Common
             services.AddSingleton<HttpClient>();
+            // DI Service
+            services.AddTransient<CrawlerService>();
             if (configuration.GetSection("HttpOption").GetValue<string>("Mode") == "Debug")
             {
                 services.AddTransient<IHttpService, MockHttpService>();
@@ -42,7 +47,9 @@ namespace PccCrawler
             {
                 services.AddTransient<IHttpService, HttpService>();
             }
-
+            // DI Process
+            services.AddTransient<I招標公告Process, 招標公告Process>();
+            // DI Dao
             services.AddScoped<IDbConnection, SqlConnection>(serviceProvider => {
                 //var connString = configuration.GetConnectionString("DefaultConnection");
                 var connString = configuration.GetSection("ConnectString").GetValue<string>("MSSQLConn");
