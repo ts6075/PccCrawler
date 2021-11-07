@@ -1,5 +1,5 @@
 {
-    "ConnectionString": {
+    "ConnectString": {
         "SQLiteConn": "{{Environment.CurrentDirectory}}\\data",
         "MSSQLConn": "Server=localhost;Database=Pcc;Trusted_Connection=True;"
     },

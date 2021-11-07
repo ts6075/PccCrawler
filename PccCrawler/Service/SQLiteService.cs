@@ -4,6 +4,7 @@ using System.Reflection;
 
 namespace PccCrawler.Service
 {
+    [Obsolete]
     public class SQLiteService
     {
         private readonly string _databaseName;

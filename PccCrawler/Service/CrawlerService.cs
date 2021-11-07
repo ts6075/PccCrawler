@@ -13,15 +13,15 @@ namespace PccCrawler.Service
 {
     public class CrawlerService
     {
-        private readonly string _sqliteConn;
         private readonly CrawlerOption _options;
         private readonly IHttpService _httpService;
+        private readonly DaoService _dao;
 
-        public CrawlerService(IConfiguration configuration, IOptions<CrawlerOption> options, IHttpService httpService)
+        public CrawlerService(IOptions<CrawlerOption> options, IHttpService httpService, DaoService dao)
         {
-            _sqliteConn = configuration.GetValue<string>("ConnectionString:SQLiteConn");
             _options = options.Value;
             _httpService = httpService;
+            _dao = dao;
         }
 
         public async Task RunAsync()
@@ -35,8 +35,7 @@ namespace PccCrawler.Service
              */
             Console.WriteLine("Start");
             Console.WriteLine("Search Database...");
-            var dao = new SQLiteService(_sqliteConn.Replace("{{Environment.CurrentDirectory}}", Environment.CurrentDirectory));
-            var masterList = dao.GetList<PccMasterPo>("PccMaster");
+            var masterList = _dao.Query<PccMasterPo>("select * from PccMaster");
             foreach (var radProctrgCate in _options.RadProctrgCates)
             {
                 Console.WriteLine($"Crawling List:{radProctrgCate}...");
@@ -68,11 +67,11 @@ namespace PccCrawler.Service
                         {
                             if (masterList.Any(x => x.Id == pk))
                             {
-                                dao.Execute($"update PccMaster set Id = {pk}, Url ='{GetUrl(UrlType.tpam_tender_detail, pk)}', Status = 100 where Id = {pk}");
+                                _dao.Query<int>($"update PccMaster set Id = {pk}, Url ='{GetUrl(UrlType.tpam_tender_detail, pk)}', Status = 100 where Id = {pk}");
                             }
                             else
                             {
-                                dao.Execute($"insert into PccMaster (Id, Url, Status) values ({pk}, '{GetUrl(UrlType.tpam_tender_detail, pk)}', 100) ");
+                                _dao.Query<int>($"insert into PccMaster (Id, Url, Status) values ({pk}, '{GetUrl(UrlType.tpam_tender_detail, pk)}', 100)");
                             }
                             pks.Add(pk);
                         }
@@ -99,13 +98,13 @@ namespace PccCrawler.Service
                         var po = analyzeService.Analyze<招標公告Po>(detailDoc);
                         po.Url = GetUrl(UrlType.tpam_tender_detail, pk);
                         招標公告Pos.Add(po);
-                        dao.Execute($"update PccMaster set Status = 900 where Id = {pk} ");
+                        _dao.Query<int>($"update PccMaster set Status = 900 where Id = {pk}");
                     }
                     catch (Exception ex)
                     {
                         Console.WriteLine($"PK: {pk} {Environment.NewLine}" +
                                           $"Msg: {ex.Message}");
-                        dao.Execute($"insert into LogEvent (Id, EventContent) values ({pk}, '{ex.Message}') ");
+                        _dao.Query<int>($"insert into LogEvent (Id, EventContent) values ({pk}, '{ex.Message}')");
                     }
                     stopWatch.Stop();
                     int totalSeconds = (int)stopWatch.Elapsed.TotalSeconds;

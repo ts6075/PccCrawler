@@ -3,6 +3,8 @@ using Microsoft.Extensions.DependencyInjection;
 using PccCrawler.Model;
 using PccCrawler.Service;
 using PccCrawler.Service.Interface;
+using System.Data;
+using System.Data.SqlClient;
 
 namespace PccCrawler
 {
@@ -40,6 +42,14 @@ namespace PccCrawler
             {
                 services.AddTransient<IHttpService, HttpService>();
             }
+
+            services.AddScoped<IDbConnection, SqlConnection>(serviceProvider => {
+                //var connString = configuration.GetConnectionString("DefaultConnection");
+                var connString = configuration.GetSection("ConnectString").GetValue<string>("MSSQLConn");
+                var conn = new SqlConnection(connString);
+                return conn;
+            });
+            services.AddTransient<DaoService>();
             return;
         }
     }
