@@ -24,14 +24,9 @@ namespace PccCrawler.Service
             {
                 throw new Exception("Get Detail Fail");
             }
-            var region1 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_1").ToList(); // 機關資料
-            var region2 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_2").ToList(); // 採購資料
-            var region3 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_3").ToList(); // 招標資料
-            var region4 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_4").ToList(); // 領投開標
-            var region5 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_5").ToList(); // 其他
-            var region8 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_8").ToList(); // TODO: 文件上傳類 53613387
-            _dao.Query<int>($"delete PccInfo where Id = {pk}");
-            foreach (var trNode in detailTrNodes)
+            _dao.Query<int>($"delete PccInfo where Id = @pk", new Dictionary<string, object> { { nameof(pk), pk } });
+            var regionAll = detailTrNodes.Where(x => x.GetAttributeValue("class", string.Empty).StartsWith("tender_table_tr_")).ToList();
+            foreach (var trNode in regionAll)
             {
                 var key = "";
                 var value = "";
@@ -61,7 +56,13 @@ namespace PccCrawler.Service
                 {
                     value = tds.First().InnerHtml.TrimEmpty();
                 }
-                _dao.Query<int>($"insert into PccInfo(Id, Name, HtmlContent) values({pk}, '{key}', '{value}')");
+                var pairs = new Dictionary<string, object>
+                {
+                    { nameof(pk), pk },
+                    { nameof(key), key },
+                    { nameof(value), value }
+                };
+                _dao.Query<int>($"insert into PccInfo(Id, Name, HtmlContent) values(@pk, @key, @value)", pairs);
                 Console.WriteLine($"Key:{key}\tValue:{value}");
             }
         }

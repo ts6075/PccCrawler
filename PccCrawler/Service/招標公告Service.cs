@@ -58,13 +58,18 @@ namespace PccCrawler.Service
                         if (!masterList.Any(x => x.Id == pk && x.Status == 900))
                         {
                             var url = GetUrl(UrlType.招標公告_詳細資料頁, pk);
+                            var pairs = new Dictionary<string, object>
+                            {
+                                { nameof(pk), pk },
+                                { nameof(url), url }
+                            };
                             if (masterList.Any(x => x.Id == pk))
                             {
-                                _dao.Query<int>($"update PccMaster set Id = {pk}, Url ='{url}', Status = 100, UpdateTime = getdate() where Id = {pk}");
+                                _dao.Query<int>($"update PccMaster set Id = @pk, Url = @url, Status = 100, UpdateTime = getdate() where Id = @pk", pairs);
                             }
                             else
                             {
-                                _dao.Query<int>($"insert into PccMaster (Id, Url, Status) values ({pk}, '{url}', 100)");
+                                _dao.Query<int>($"insert into PccMaster (Id, Url, Status) values (@pk, @url, 100)", pairs);
                             }
                             pks.Add(pk);
                         }
@@ -88,15 +93,23 @@ namespace PccCrawler.Service
                     {
                         var detailDoc = await GetDetailHtmlDoc(pk);
                         _analyzeService.Analyze招標公告(detailDoc);
-                        _dao.Query<int>($"update PccMaster set Status = 900 where Id = {pk}");
+                        var pairs = new Dictionary<string, object>
+                        {
+                            { nameof(pk), pk },
+                        };
+                        _dao.Query<int>($"update PccMaster set Status = 900 where Id = @pk", pairs);
                     }
                     catch (Exception ex)
                     {
                         Console.WriteLine($"PK: {pk} {Environment.NewLine}" +
                                           $"Msg: {ex.Message}");
-                        // TODO: 參數化
+                        var pairs = new Dictionary<string, object>
+                        {
+                            { nameof(pk), pk },
+                            { nameof(ex.Message), ex.Message }
+                        };
                         _dao.Query<int>($"insert into LogEvent(EventLevel ,EventType, EventContent, CaseId) " +
-                                        $"values('Error', 'EventType', '{ex.Message}', {pk})");
+                                        $"values('Error', 'EventType', @ex.Message, @pk)", pairs);
                     }
                     if (_options.Mode == "Debug")
                     {
