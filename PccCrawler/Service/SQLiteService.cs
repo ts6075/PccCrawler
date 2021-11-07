@@ -37,6 +37,7 @@ namespace PccCrawler.Service
             }
             SQLiteConnection.CreateFile(_databaseName);
             Execute("CREATE TABLE IF NOT EXISTS PccMaster( Id varchar(10), Url TEXT, Status int ) ");
+            Execute("CREATE TABLE IF NOT EXISTS LogEvent( Id varchar(10), EventContent TEXT ) ");
         }
 
         public int Execute(string sql_statement)

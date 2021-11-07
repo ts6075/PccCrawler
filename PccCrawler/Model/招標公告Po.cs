@@ -32,6 +32,7 @@
         public string? 本採購案是否屬於建築工程 { get; set; }
         public string? 財物採購性質 { get; set; }
         public string? 採購金額級距 { get; set; }
+        public string? 法人團體辦理適用採購法案件之依據法條 { get; set; }
         public string? 辦理方式 { get; set; }
         public string? 依據法條 { get; set; }
         public 是否適用條約或協定之採購? 是否適用條約或協定之採購 { get; set; }
@@ -65,15 +66,23 @@
         public string? 是否依政府採購法施行細則第64條之2辦理 { get; set; }
         public string? 是否電子報價 { get; set; }
         public string? 新增公告傳輸次數 { get; set; }
+        public string? 更正序號 { get; set; }
         public string? 招標狀態 { get; set; }
         public string? 公告日 { get; set; }
+        public string? 原公告日 { get; set; }
+        public string? 採購預告公告日期 { get; set; }
         public string? 是否複數決標 { get; set; }
         public string? 是否訂有底價 { get; set; }
+        public string? 合於招標文件規定之最低標標價超過開標前訂定之底價是否辦理減價程序 { get; set; }
         public string? 價格是否納入評選 { get; set; }
+        public string? 是否於招標文件載明固定費用或費率 { get; set; }
         public string? 所占配分或權重是否為20_以上{ get; set; }
+        public string? 是否於招標文件載明固定費用或費率_而僅評選組成該費用或費率之內容_最有利標評選辦法第9條第2項_ { get; set; }
+        public string? 是否依最有利標評選辦法第12條第2款_第13條或第15條第1項第2款規定_決定最有利標 { get; set; }
         public string? 是否屬特殊採購 { get; set; }
         public string? 是否已辦理公開閱覽 { get; set; }
         public string? 是否屬統包 { get; set; }
+        public string? 本案完成後所應達到之功能_效益_標準_品質或特性 { get; set; }
         public string? 是否屬共同供應契約採購 { get; set; }
         public string? 是否屬二以上機關之聯合採購_不適用共同供應契約規定_ { get; set; }
         public string? 是否應依公共工程專業技師簽證規則實施技師簽證 { get; set; }
@@ -88,6 +97,7 @@
         public 是否提供電子領標? 是否提供電子領標Po { get; set; }
         public string? 是否提供電子領標 { get; set; }
         public string? 是否提供電子投標 { get; set; }
+        public string? 是否異動招標文件 { get; set; }
         public string? 截止投標 { get; set; }
         public string? 開標時間 { get; set; }
         public string? 開標地點 { get; set; }
@@ -111,6 +121,9 @@
     public class 其他
     {
         public string? 是否依據採購法第99條 { get; set; }
+        public string? 是否屬優先採購身心障礙福利機構產品或勞務 { get; set; }
+        public string? 是否屬推動募兵制暫行條例第10條第1項 { get; set; }
+        public string? 是否於招標文件載明優先決標予身心障礙福利機構團體或庇護工場 { get; set; }
         public string? 履約地點 { get; set; }
         public string? 履約期限 { get; set; }
         public string? 是否刊登公報 { get; set; }

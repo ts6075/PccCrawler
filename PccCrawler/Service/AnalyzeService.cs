@@ -35,6 +35,7 @@ namespace PccCrawler.Service
             var region3 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_3").ToList();
             var region4 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_4").ToList();
             var region5 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_5").ToList();
+            var region8 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_8").ToList(); // TODO: 文件上傳類 53613387
             #region region1 機關資料
             foreach (var trNode in region1)
             {
@@ -96,10 +97,11 @@ namespace PccCrawler.Service
 
                 var normalList = new string[]
                 {
-                    "標案名稱", "工程計畫編號", "本採購案是否屬於建築工程", "財物採購性質", "採購金額級距", "辦理方式", "依據法條",
+                    "標案名稱", "工程計畫編號", "本採購案是否屬於建築工程", "財物採購性質", "採購金額級距",
+                    "法人團體辦理適用採購法案件之依據法條", "辦理方式", "依據法條",
                     "是否採用電子競價", "是否為商業財物或服務",
                     "本採購是否屬「具敏感性或國安(含資安)疑慮之業務範疇」採購", "本採購是否屬「涉及國家安全」採購",
-                    "預算金額", "預算金額是否公開", "預計金額", "預計金額是否公開", "是否受機關補助", "是否含特別預算"
+                    "預算金額", "預算金額是否公開", "預計金額", "預計金額是否公開", "是否含特別預算"
                 };
                 var tds = trNode.SelectNodes("./td");
                 if (key == "標案案號" && tds.Count == 2)
@@ -157,6 +159,11 @@ namespace PccCrawler.Service
                         SetValue(ref 採購資料Po, key, value);
                     }
                 }
+                else if (key == "是否受機關補助" && tds.Count == 1)
+                {
+                    value = tds.First().InnerHtml.TrimEmpty();
+                    SetValue(ref 採購資料Po, key, value);
+                }
                 else if (normalList.Contains(key) && tds.Count == 1)
                 {
                     value = tds.First().GetDirectInnerText().TrimEmpty();
@@ -195,9 +202,12 @@ namespace PccCrawler.Service
 
                 var normalList = new string[]
                 {
-                    "是否依政府採購法施行細則第64條之2辦理", "是否電子報價", "新增公告傳輸次數", "招標狀態", "公告日",
-                    "是否複數決標", "是否訂有底價", "價格是否納入評選", "所占配分或權重是否為20%以上",
-                    "是否屬特殊採購", "是否已辦理公開閱覽", "是否屬統包", "是否屬共同供應契約採購",
+                    "是否依政府採購法施行細則第64條之2辦理", "是否電子報價", "新增公告傳輸次數", "更正序號", "招標狀態", "原公告日",
+                    "採購預告公告日期", "是否複數決標", "是否訂有底價", "合於招標文件規定之最低標標價超過開標前訂定之底價是否辦理減價程序", 
+                    "價格是否納入評選", "是否於招標文件載明固定費用或費率", "所占配分或權重是否為20%以上",
+                    "是否於招標文件載明固定費用或費率，而僅評選組成該費用或費率之內容(最有利標評選辦法第9條第2項)",
+                    "是否依最有利標評選辦法第12條第2款、第13條或第15條第1項第2款規定，決定最有利標",
+                    "是否屬特殊採購", "是否已辦理公開閱覽", "是否屬統包", "本案完成後所應達到之功能、效益、標準、品質或特性", "是否屬共同供應契約採購",
                     "是否屬二以上機關之聯合採購(不適用共同供應契約規定)", "是否應依公共工程專業技師簽證規則實施技師簽證",
                     "是否採行協商措施", "是否適用採購法第104條或105條或招標期限標準第10條或第4條之1",
                     "是否依據採購法第106條第1項第1款辦理"
@@ -211,6 +221,12 @@ namespace PccCrawler.Service
                 else if (key == "決標方式" && tds.Count == 1)
                 {
                     value = tds.First().GetDirectInnerText().TrimEmpty();
+                    SetValue(ref 招標資料Po, key, value);
+                }
+                else if (key == "公告日" && tds.Count == 1)
+                {
+                    // 可能會有<span>，所以只能用InnerText
+                    value = tds.First().InnerText.TrimEmpty();
                     SetValue(ref 招標資料Po, key, value);
                 }
                 else if (normalList.Contains(key) && tds.Count == 1)
@@ -334,6 +350,11 @@ namespace PccCrawler.Service
                         領投開標Po.是否提供電子領標Po = 是否提供電子領標Po;
                     }
                 }
+                else if (key == "是否異動招標文件" && tds.Count == 1)
+                {
+                    value = tds.First().InnerText.TrimEmpty();
+                    SetValue(ref 領投開標Po, key, value);
+                }
                 else if (key == "截止投標" && tds.Count == 1)
                 {
                     value = tds.First().InnerText.TrimEmpty();
@@ -392,8 +413,9 @@ namespace PccCrawler.Service
 
                 var normalList = new string[]
                 {
-                    "履約地點", "履約期限", "是否刊登公報", "本案採購契約是否採用主管機關訂定之範本",
-                    "是否屬災區重建工程", "是否刊登英文公告"
+                    "是否屬優先採購身心障礙福利機構產品或勞務", "是否屬推動募兵制暫行條例第10條第1項",
+                    "是否於招標文件載明優先決標予身心障礙福利機構團體或庇護工場", "履約地點", "履約期限", "是否刊登公報",
+                    "本案採購契約是否採用主管機關訂定之範本", "是否屬災區重建工程", "是否刊登英文公告"
                 };
                 var tds = trNode.SelectNodes("./td");
                 if (key == "是否依據採購法第99條" && tds.Count == 2)
@@ -520,7 +542,7 @@ namespace PccCrawler.Service
             // Replace特殊字元
             string GetPropertyName(string key)
             {
-                new List<string> { "「", "(", ")", "」", "、", "%" }.ForEach(x =>
+                new List<string> { "「", "(", ")", "」", "、", "%", "，" }.ForEach(x =>
                 {
                     key = key.Replace(x, "_");
                 });

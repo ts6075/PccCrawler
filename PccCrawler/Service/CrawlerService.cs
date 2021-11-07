@@ -6,6 +6,7 @@ using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
 using PccCrawler.Service.Interface;
 using Microsoft.Extensions.Options;
+using System.Linq;
 
 namespace PccCrawler.Service
 {
@@ -99,7 +100,9 @@ namespace PccCrawler.Service
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine(ex.Message);
+                        Console.WriteLine($"PK: {pk} {Environment.NewLine}" +
+                                          $"Msg: {ex.Message}");
+                        dao.Execute($"insert into LogEvent (Id, EventContent) values ({pk}, '{ex.Message}') ");
                     }
                     stopWatch.Stop();
                     int totalSeconds = (int)stopWatch.Elapsed.TotalSeconds;
@@ -110,7 +113,7 @@ namespace PccCrawler.Service
                     }
                     if (totalSeconds < _options.IntervalSeconds)
                     {
-                        Console.WriteLine($"Use time is too short, a little delay:{15 - totalSeconds}");
+                        Console.WriteLine($"Use time is too short, a little delay:{_options.IntervalSeconds - totalSeconds}");
                         Thread.Sleep((_options.IntervalSeconds - totalSeconds) * 1000);
                     }
                 }
