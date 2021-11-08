@@ -16,16 +16,22 @@ namespace PccCrawler.Service
         public void Analyze招標公告(HtmlDocument detailDoc)
         {
             var url = detailDoc.DocumentNode.SelectNodes("/html/head/meta")
-                                           .First(x => x.GetAttributeValue("property", null) == "og:url")
-                                           .GetAttributeValue("content", string.Empty);
+                                            .First(x => x.GetAttributeValue("property", null) == "og:url")
+                                            .GetAttributeValue("content", string.Empty);
             var pk = url.Contains("primaryKey=") ? url.Split("primaryKey=")[1].Split('&')[0] : string.Empty;
             var detailTrNodes = detailDoc.GetElementbyId("print_area")?.SelectNodes("./table/tr");
             if (detailTrNodes == null)
             {
                 throw new Exception("Get Detail Fail");
             }
-            _dao.Query<int>($"delete PccInfo where Id = @pk", new Dictionary<string, object> { { nameof(pk), pk } });
-            var regionAll = detailTrNodes.Where(x => x.GetAttributeValue("class", string.Empty).StartsWith("tender_table_tr_")).ToList();
+            _dao.Query<int>($"delete PccInfo where Id = @pk and Category = '招標公告'", new Dictionary<string, object> { { nameof(pk), pk } });
+            // TODO: 暫時只處理常見5大區塊
+            //var regionAll = detailTrNodes.Where(x => x.GetAttributeValue("class", string.Empty).StartsWith("tender_table_tr_")).ToList();
+            var regionAll = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_1" ||
+                                                     x.GetAttributeValue("class", null) == "tender_table_tr_2" ||
+                                                     x.GetAttributeValue("class", null) == "tender_table_tr_3" ||
+                                                     x.GetAttributeValue("class", null) == "tender_table_tr_4" ||
+                                                     x.GetAttributeValue("class", null) == "tender_table_tr_5").ToList();
             foreach (var trNode in regionAll)
             {
                 var key = "";
@@ -62,7 +68,7 @@ namespace PccCrawler.Service
                     { nameof(key), key },
                     { nameof(value), value }
                 };
-                _dao.Query<int>($"insert into PccInfo(Id, Name, HtmlContent) values(@pk, @key, @value)", pairs);
+                _dao.Query<int>($"insert into PccInfo(Id, Category, Name, HtmlContent) values(@pk, '招標公告', @key, @value)", pairs);
                 Console.WriteLine($"Key:{key}\tValue:{value}");
             }
         }
@@ -102,6 +108,7 @@ namespace PccCrawler.Service
             var region3 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_3").ToList();
             var region4 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_4").ToList();
             var region5 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_5").ToList();
+            var region6 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_6").ToList(); // TODO: 招標品項 53618012
             var region8 = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_8").ToList(); // TODO: 文件上傳類 53613387
             #region region1 機關資料
             foreach (var trNode in region1)

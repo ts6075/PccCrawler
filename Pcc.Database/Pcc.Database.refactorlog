@@ -7,4 +7,18 @@
     <Property Name="ParentElementType" Value="SqlTable" />
     <Property Name="NewName" Value="Seq" />
   </Operation>
+  <Operation Name="Rename Refactor" Key="81c2f8a1-69ed-47f1-9b48-27dc464dd98d" ChangeDateTime="11/08/2021 09:07:46">
+    <Property Name="ElementName" Value="[dbo].[PccInfo].[Type]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[PccInfo]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="Category" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="c7e99691-c227-4315-a19a-2266d6fe65fb" ChangeDateTime="11/08/2021 09:07:50">
+    <Property Name="ElementName" Value="[dbo].[PccMaster].[Type]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[PccMaster]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="Category" />
+  </Operation>
 </Operations>

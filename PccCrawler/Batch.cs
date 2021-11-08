@@ -46,7 +46,13 @@ namespace PccCrawler
                 services.AddTransient<IHttpService, HttpService>();
             }
             services.AddTransient<I招標公告Service, 招標公告Service>();
-            services.AddTransient<IAnalyzeService, AnalyzeService>();
+            services.AddTransient<I公開徵求Service, 公開徵求Service>();
+            services.AddTransient<I公開閱覽Service, 公開閱覽Service>();
+            services.AddTransient<I政府採購預告Service, 政府採購預告Service>();
+            services.AddTransient<I決標公告Service, 決標公告Service>();
+            services.AddTransient<I無法決標公告Service, 無法決標公告Service>();
+            services.AddTransient<I更正公告Service, 更正公告Service>();
+        services.AddTransient<IAnalyzeService, AnalyzeService>();
             // DI Process
             // DI Dao
             services.AddScoped<IDbConnection, SqlConnection>(serviceProvider => {

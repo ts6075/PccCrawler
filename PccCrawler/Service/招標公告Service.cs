@@ -25,7 +25,7 @@ namespace PccCrawler.Service
 
         public async Task DoJob()
         {
-            var masterList = _dao.Query<PccMasterPo>("select * from PccMaster");
+            var masterList = _dao.Query<PccMasterPo>("select * from PccMaster where Category = '招標公告'");
             foreach (var radProctrgCate in _options.RadProctrgCates)
             {
                 Console.WriteLine($"Crawling List:招標公告-{radProctrgCate}...");
@@ -65,11 +65,11 @@ namespace PccCrawler.Service
                             };
                             if (masterList.Any(x => x.Id == pk))
                             {
-                                _dao.Query<int>($"update PccMaster set Id = @pk, Url = @url, Status = 100, UpdateTime = getdate() where Id = @pk", pairs);
+                                _dao.Query<int>($"update PccMaster set Url = @url, Status = 100, UpdateTime = getdate() where Id = @pk and Category = '招標公告'", pairs);
                             }
                             else
                             {
-                                _dao.Query<int>($"insert into PccMaster (Id, Url, Status) values (@pk, @url, 100)", pairs);
+                                _dao.Query<int>($"insert into PccMaster (Id, Category, Url, Status) values (@pk, '招標公告', @url, 100)", pairs);
                             }
                             pks.Add(pk);
                         }
@@ -97,7 +97,7 @@ namespace PccCrawler.Service
                         {
                             { nameof(pk), pk },
                         };
-                        _dao.Query<int>($"update PccMaster set Status = 900 where Id = @pk", pairs);
+                        _dao.Query<int>($"update PccMaster set Status = 900 where Id = @pk and Category = '招標公告'", pairs);
                     }
                     catch (Exception ex)
                     {
@@ -109,7 +109,7 @@ namespace PccCrawler.Service
                             { nameof(ex.Message), ex.Message }
                         };
                         _dao.Query<int>($"insert into LogEvent(EventLevel ,EventType, EventContent, CaseId) " +
-                                        $"values('Error', 'EventType', @ex.Message, @pk)", pairs);
+                                        $"values('Error', '招標公告', @Message, @pk)", pairs);
                     }
                     if (_options.Mode == "Debug")
                     {
@@ -123,7 +123,7 @@ namespace PccCrawler.Service
                     var intervalSeconds = _options.IntervalSeconds;
                     if (totalSeconds < intervalSeconds)
                     {
-                        Console.WriteLine($"Use time is too short({totalSeconds * 1000}s), a little delay:{intervalSeconds - totalSeconds}s");
+                        Console.WriteLine($"Use time is too short({totalSeconds}s), a little delay:{intervalSeconds - totalSeconds}s");
                         Thread.Sleep((intervalSeconds - totalSeconds) * 1000);
                     }
                     #endregion

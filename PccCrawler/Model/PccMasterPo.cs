@@ -10,6 +10,10 @@
         /// </summary>
         public string Id { get; set; } = null!;
         /// <summary>
+        /// 類別
+        /// </summary>
+        public string Category { get; set; } = null!;
+        /// <summary>
         /// Url
         /// </summary>
         public string? Url { get; set; }
