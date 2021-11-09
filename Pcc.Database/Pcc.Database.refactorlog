@@ -21,4 +21,25 @@
     <Property Name="ParentElementType" Value="SqlTable" />
     <Property Name="NewName" Value="Category" />
   </Operation>
+  <Operation Name="Rename Refactor" Key="6966fd44-eebb-43ab-9966-d4db0fed2de4" ChangeDateTime="11/09/2021 03:09:21">
+    <Property Name="ElementName" Value="[dbo].[LogEvent].[CaseId]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[LogEvent]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="CaseNo" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="00ca6286-25d8-4d17-a80e-b49a46163c77" ChangeDateTime="11/09/2021 03:09:28">
+    <Property Name="ElementName" Value="[dbo].[PccInfo].[Id]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[PccInfo]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="CaseNo" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="f30c650f-c21a-46ac-88a7-654c588bf3ab" ChangeDateTime="11/09/2021 03:09:31">
+    <Property Name="ElementName" Value="[dbo].[PccMaster].[Id]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[PccMaster]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="CaseNo" />
+  </Operation>
 </Operations>

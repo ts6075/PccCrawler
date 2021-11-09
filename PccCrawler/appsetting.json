@@ -16,6 +16,8 @@
     "HttpOption": {
         "Mode": "Release",
         "Mock招標公告列表": "./Mock/招標公告/招標公告列表.html",
-        "Mock招標公告資料": "./Mock/招標公告/招標公告資料.html"
+        "Mock招標公告資料": "./Mock/招標公告/招標公告資料.html",
+        "Mock公開徵求列表": "./Mock/公開徵求/公開徵求列表.html",
+        "Mock公開徵求資料": "./Mock/公開徵求/公開徵求資料.html"
     }
 }

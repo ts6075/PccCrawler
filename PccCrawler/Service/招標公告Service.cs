@@ -29,7 +29,7 @@ namespace PccCrawler.Service
             foreach (var radProctrgCate in _options.RadProctrgCates)
             {
                 Console.WriteLine($"Crawling List:招標公告-{radProctrgCate}...");
-                var pks = new List<string>();
+                var caseNos = new List<string>();
                 #region 取得所有Url
                 var total = await GetTotalItem(radProctrgCate);
                 var totalPage = total switch
@@ -48,30 +48,30 @@ namespace PccCrawler.Service
                         Console.WriteLine("Get List Fail");
                         return;
                     }
-                    for (var i = 1; i < trNodes.Count - 1; i++)
+                    for (var i = 0; i < trNodes.Count - 1; i++)
                     {
                         // 取得Url
                         var hrefNode = trNodes[i].SelectSingleNode("./td[4]/a");
                         var href = hrefNode.GetAttributeValue("href", null);
-                        var pk = href.Contains("primaryKey=") ? href.Split("primaryKey=")[1] : "";
+                        var caseNo = href.Contains("primaryKey=") ? href.Split("primaryKey=")[1] : "";
                         // 檢查資料是否曾爬取過且成功
-                        if (!masterList.Any(x => x.Id == pk && x.Status == 900))
+                        if (!masterList.Any(x => x.CaseNo == caseNo && x.Status == 900))
                         {
-                            var url = GetUrl(UrlType.招標公告_詳細資料頁, pk);
+                            var url = GetUrl(UrlType.招標公告_詳細資料頁, caseNo);
                             var pairs = new Dictionary<string, object>
                             {
-                                { nameof(pk), pk },
+                                { nameof(caseNo), caseNo },
                                 { nameof(url), url }
                             };
-                            if (masterList.Any(x => x.Id == pk))
+                            if (masterList.Any(x => x.CaseNo == caseNo))
                             {
-                                _dao.Query<int>($"update PccMaster set Url = @url, Status = 100, UpdateTime = getdate() where Id = @pk and Category = '招標公告'", pairs);
+                                _dao.Query<int>($"update PccMaster set Url = @url, Status = 100, UpdateTime = getdate() where CaseNo = @caseNo and Category = '招標公告'", pairs);
                             }
                             else
                             {
-                                _dao.Query<int>($"insert into PccMaster (Id, Category, Url, Status) values (@pk, '招標公告', @url, 100)", pairs);
+                                _dao.Query<int>($"insert into PccMaster (CaseNo, Category, Url, Status) values (@caseNo, '招標公告', @url, 100)", pairs);
                             }
-                            pks.Add(pk);
+                            caseNos.Add(caseNo);
                         }
                     }
 
@@ -80,36 +80,36 @@ namespace PccCrawler.Service
                         break;
                     }
                 }
-                Console.WriteLine($"TotalItem: {total} count，NewItem: {pks.Count} count");
+                Console.WriteLine($"TotalItem: {total} count，NewItem: {caseNos.Count} count");
                 #endregion
 
                 var stopWatch = new Stopwatch();
-                foreach (var pk in pks)
+                foreach (var caseNo in caseNos)
                 {
                     stopWatch.Reset();
                     stopWatch.Start();
-                    Console.WriteLine($"Crawling Detail:{pk}...");
+                    Console.WriteLine($"Crawling Detail:{caseNo}...");
                     try
                     {
-                        var detailDoc = await GetDetailHtmlDoc(pk);
+                        var detailDoc = await GetDetailHtmlDoc(caseNo);
                         _analyzeService.Analyze招標公告(detailDoc);
                         var pairs = new Dictionary<string, object>
                         {
-                            { nameof(pk), pk },
+                            { nameof(caseNo), caseNo },
                         };
-                        _dao.Query<int>($"update PccMaster set Status = 900 where Id = @pk and Category = '招標公告'", pairs);
+                        _dao.Query<int>($"update PccMaster set Status = 900 where CaseNo = @caseNo and Category = '招標公告'", pairs);
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"PK: {pk} {Environment.NewLine}" +
+                        Console.WriteLine($"CaseNo: {caseNo} {Environment.NewLine}" +
                                           $"Msg: {ex.Message}");
                         var pairs = new Dictionary<string, object>
                         {
-                            { nameof(pk), pk },
+                            { nameof(caseNo), caseNo },
                             { nameof(ex.Message), ex.Message }
                         };
-                        _dao.Query<int>($"insert into LogEvent(EventLevel ,EventType, EventContent, CaseId) " +
-                                        $"values('Error', '招標公告', @Message, @pk)", pairs);
+                        _dao.Query<int>($"insert into LogEvent(EventLevel ,EventType, EventContent, CaseNo) " +
+                                        $"values('Error', '招標公告', @Message, @caseNo)", pairs);
                     }
                     if (_options.Mode == "Debug")
                     {
@@ -192,11 +192,11 @@ namespace PccCrawler.Service
         /// <summary>
         /// 取得詳細資料頁Html
         /// </summary>
-        /// <param name="pk">識別碼</param>
+        /// <param name="caseNo">識別碼</param>
         /// <returns></returns>
-        public async Task<HtmlDocument> GetDetailHtmlDoc(string pk)
+        public async Task<HtmlDocument> GetDetailHtmlDoc(string caseNo)
         {
-            var url = GetUrl(UrlType.招標公告_詳細資料頁, pk);
+            var url = GetUrl(UrlType.招標公告_詳細資料頁, caseNo);
             var resp = await _httpService.DoGetAsync(url);
             var doc = new HtmlDocument();
             doc.LoadHtml(resp);

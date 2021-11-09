@@ -32,6 +32,7 @@ namespace PccCrawler.Service
             try
             {
                 var path = _options.Mock招標公告資料;
+                //var path = _options.Mock公開徵求資料;
                 using var sr = new StreamReader(path);
                 string resultContent = sr.ReadToEnd();
                 sr.Close();
@@ -49,6 +50,7 @@ namespace PccCrawler.Service
             try
             {
                 var path = _options.Mock招標公告列表;
+                //var path = _options.Mock公開徵求列表;
                 using var sr = new StreamReader(path);
                 string resultContent = sr.ReadToEnd();
                 sr.Close();

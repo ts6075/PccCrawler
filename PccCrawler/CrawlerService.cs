@@ -41,7 +41,8 @@ namespace PccCrawler.Service
              */
             Console.WriteLine("Start");
             Console.WriteLine("Search Database...");
-            await _招標公告Service.DoJob();
+            // TODO: 待取消測試時註解
+            //await _招標公告Service.DoJob();
             await _公開徵求Service.DoJob();
             await _公開閱覽Service.DoJob();
             await _政府採購預告Service.DoJob();

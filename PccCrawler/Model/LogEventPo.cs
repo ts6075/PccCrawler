@@ -12,19 +12,19 @@
         /// <summary>
         /// 事件等級
         /// </summary>
-        public string EventLevel { get; set; }
+        public string EventLevel { get; set; } = null!;
         /// <summary>
         /// 事件種類
         /// </summary>
-        public string EventType { get; set; }
+        public string? EventType { get; set; }
         /// <summary>
         /// 事件內容
         /// </summary>
-        public string EventContent { get; set; }
+        public string? EventContent { get; set; }
         /// <summary>
         /// 識別碼
         /// </summary>
-        public string CaseId { get; set; }
+        public string? CaseNo { get; set; }
         /// <summary>
         /// 建立時間
         /// </summary>

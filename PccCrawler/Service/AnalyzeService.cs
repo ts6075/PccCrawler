@@ -13,18 +13,19 @@ namespace PccCrawler.Service
             _dao = dao;
         }
 
+        #region Analyze招標公告
         public void Analyze招標公告(HtmlDocument detailDoc)
         {
             var url = detailDoc.DocumentNode.SelectNodes("/html/head/meta")
                                             .First(x => x.GetAttributeValue("property", null) == "og:url")
                                             .GetAttributeValue("content", string.Empty);
-            var pk = url.Contains("primaryKey=") ? url.Split("primaryKey=")[1].Split('&')[0] : string.Empty;
+            var caseNo = url.Contains("primaryKey=") ? url.Split("primaryKey=")[1].Split('&')[0] : string.Empty;
             var detailTrNodes = detailDoc.GetElementbyId("print_area")?.SelectNodes("./table/tr");
             if (detailTrNodes == null)
             {
                 throw new Exception("Get Detail Fail");
             }
-            _dao.Query<int>($"delete PccInfo where Id = @pk and Category = '招標公告'", new Dictionary<string, object> { { nameof(pk), pk } });
+            _dao.Query<int>($"delete PccInfo where CaseNo = @caseNo and Category = '招標公告'", new Dictionary<string, object> { { nameof(caseNo), caseNo } });
             // TODO: 暫時只處理常見5大區塊
             //var regionAll = detailTrNodes.Where(x => x.GetAttributeValue("class", string.Empty).StartsWith("tender_table_tr_")).ToList();
             var regionAll = detailTrNodes.Where(x => x.GetAttributeValue("class", null) == "tender_table_tr_1" ||
@@ -64,14 +65,63 @@ namespace PccCrawler.Service
                 }
                 var pairs = new Dictionary<string, object>
                 {
-                    { nameof(pk), pk },
+                    { nameof(caseNo), caseNo },
                     { nameof(key), key },
                     { nameof(value), value }
                 };
-                _dao.Query<int>($"insert into PccInfo(Id, Category, Name, HtmlContent) values(@pk, '招標公告', @key, @value)", pairs);
+                _dao.Query<int>($"insert into PccInfo(CaseNo, Category, Name, HtmlContent) values(@caseNo, '招標公告', @key, @value)", pairs);
                 Console.WriteLine($"Key:{key}\tValue:{value}");
             }
         }
+        #endregion
+
+        #region Analyze公開徵求
+        public void Analyze公開徵求(HtmlDocument detailDoc)
+        {
+            var url = detailDoc.DocumentNode.SelectNodes("/html/head/meta")
+                                            .First(x => x.GetAttributeValue("property", null) == "og:url")
+                                            .GetAttributeValue("content", string.Empty);
+            var caseNo = url.Contains("tenderCaseNo=") ? url.Split("tenderCaseNo=")[1].Split('&')[0] : string.Empty;
+            var detailTrNodes = detailDoc.GetElementbyId("printRange")?.SelectNodes("./table/tr");
+            if (detailTrNodes == null)
+            {
+                throw new Exception("Get Detail Fail");
+            }
+            _dao.Query<int>($"delete PccInfo where CaseNo = @caseNo and Category = '招標公告'", new Dictionary<string, object> { { nameof(caseNo), caseNo } });
+            foreach (var trNode in detailTrNodes)
+            {
+                // 有可能遇到完全空白的欄位
+                if (string.IsNullOrEmpty(trNode.InnerHtml.TrimEmpty()))
+                {
+                    continue;
+                }
+                var key = "";
+                var value = "";
+                var ths = trNode.SelectNodes("./th[@class=\"T11b\"]/strong | ./td[@class=\"T11b\"]/strong");
+                if (ths.Count != 1)
+                {
+                    throw new Exception($"程式終止:檢測到未處理的特殊欄位，請通知工程師進行例外處理，參數:{Environment.NewLine}" +
+                                        $"ths.Count:{ths.Count}{Environment.NewLine}" +
+                                        $"InnerHtml:{trNode.InnerHtml}{Environment.NewLine}");
+                }
+                else
+                {
+                    key = ths.First().GetDirectInnerText().TrimEmpty();
+                }
+
+                var tds = trNode.SelectNodes("./td");
+                value = tds.First().InnerHtml.TrimEmpty();
+                var pairs = new Dictionary<string, object>
+                {
+                    { nameof(caseNo), caseNo },
+                    { nameof(key), key },
+                    { nameof(value), value }
+                };
+                _dao.Query<int>($"insert into PccInfo(CaseNo, Category, Name, HtmlContent) values(@caseNo, '招標公告', @key, @value)", pairs);
+                Console.WriteLine($"Key:{key}\tValue:{value}");
+            }
+        }
+        #endregion
 
         #region [已過時]完全強型處理所有欄位判斷
         /*

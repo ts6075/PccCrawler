@@ -8,7 +8,7 @@
         /// <summary>
         /// 識別碼
         /// </summary>
-        public string Id { get; set; } = null!;
+        public string CaseNo { get; set; } = null!;
         /// <summary>
         /// 類別
         /// </summary>

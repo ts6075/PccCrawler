@@ -3,7 +3,7 @@
     [EventLevel]   VARCHAR (10)   NOT NULL,
     [EventType]    NVARCHAR (50)  NULL,
     [EventContent] NVARCHAR (MAX) NULL,
-    [CaseId]       INT            NULL,
+    [CaseNo]       VARCHAR(50)            NULL,
     [CreateTime]   DATETIME       NOT NULL DEFAULT getdate(),
     CONSTRAINT [PK__LogEvent__CA1E3C88D1881868] PRIMARY KEY CLUSTERED ([Seq] ASC)
 );
@@ -27,7 +27,7 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'建立時�
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'識別碼', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'LogEvent', @level2type = N'COLUMN', @level2name = N'CaseId';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'識別碼', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'LogEvent', @level2type = N'COLUMN', @level2name = 'CaseNo';
 
 
 GO
