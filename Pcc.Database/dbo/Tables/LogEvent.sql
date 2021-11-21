@@ -3,7 +3,7 @@
     [EventLevel]   VARCHAR (10)   NOT NULL,
     [EventType]    NVARCHAR (50)  NULL,
     [EventContent] NVARCHAR (MAX) NULL,
-    [CaseNo]       VARCHAR(50)            NULL,
+    [CaseNo]       VARCHAR(100)            NULL,
     [CreateTime]   DATETIME       NOT NULL DEFAULT getdate(),
     CONSTRAINT [PK__LogEvent__CA1E3C88D1881868] PRIMARY KEY CLUSTERED ([Seq] ASC)
 );

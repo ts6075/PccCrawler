@@ -1,5 +1,5 @@
 ﻿CREATE TABLE [dbo].[PccInfo] (
-    [CaseNo]          VARCHAR(50)            NOT NULL,
+    [CaseNo]          VARCHAR(100)            NOT NULL,
     [Category] NVARCHAR(20) NOT NULL, 
     [Name]        NVARCHAR (50)  NOT NULL,
     [HtmlContent] NVARCHAR (MAX) NULL,

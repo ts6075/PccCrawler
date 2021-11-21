@@ -1,7 +1,7 @@
 ﻿CREATE TABLE [dbo].[PccMaster] (
-    [CaseNo]         VARCHAR(50)           NOT NULL,
+    [CaseNo]         VARCHAR(100)           NOT NULL,
     [Category] NVARCHAR(20) NOT NULL, 
-    [Url]        VARCHAR (200) NULL,
+    [Url]        VARCHAR (500) NULL,
     [Status]     INT           NULL,
     [CreateTime] DATETIME      CONSTRAINT [DF_PccMaster_CreateTime] DEFAULT (getdate()) NOT NULL,
     [UpdateTime] DATETIME      CONSTRAINT [DF_PccMaster_UpdateTime] DEFAULT (getdate()) NOT NULL,

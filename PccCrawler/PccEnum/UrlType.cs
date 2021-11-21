@@ -25,8 +25,7 @@
 
         /// <summary>
         /// (UnLock)公開徵求 - 詳細資料頁
-        /// https://web.pcc.gov.tw/tps/tps/tp/main/tps/tp/tp.do?method=initialAppealViewVendor&pMenu=common&pkTpAppeal=50147759&tenderCaseNo=JE10M1023Z&tenderSq=02&pkTpAppealHis=50426182
-        /// https://web.pcc.gov.tw/tps/tps/tp/main/tps/tp/tp.do?method=initialAppealViewVendor&pMenu=common&tenderCaseNo=B101061
+        /// http://web.pcc.gov.tw/tps/tps/tp/main/tps/tp/tp.do?method=initialAppealViewVendor&pMenu=common&pkTpAppeal=50148034&orgId=3.79.62&orgName=臺北大眾捷運股份有限公司&tenderCaseNo=C10A07341&tenderSq=01&pkTpAppealHis=50426221
         /// </summary>
         公開徵求_詳細資料頁,
 

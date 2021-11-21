@@ -1,5 +1,6 @@
 ﻿using HtmlAgilityPack;
 using Microsoft.Extensions.Options;
+using PccCrawler.Extension;
 using PccCrawler.Model;
 using PccCrawler.PccEnum;
 using PccCrawler.Service.Interface;
@@ -25,7 +26,7 @@ namespace PccCrawler.Service
         {
             var masterList = _dao.Query<PccMasterPo>("select * from PccMaster where Category = '公開徵求'");
             Console.WriteLine($"Crawling List:公開徵求(全)...");
-            var tenderCaseNos = new List<string>();
+            var vos = new List<公開徵求InfoVo>();
             #region 取得所有Url
             var total = await GetTotalItem();
             var totalPage = total switch
@@ -46,46 +47,36 @@ namespace PccCrawler.Service
                 }
                 for (var i = 0; i < formNodes.Count - 1; i++)
                 {
-                    // 取得tenderCaseNo
-                    var tenderCaseNo = formNodes[i].SelectSingleNode(".//input[@id=\"tenderCaseNo\"]")?.GetAttributeValue("value", string.Empty);
-                    // 檢查資料是否曾爬取過且成功
-                    if (!masterList.Any(x => x.CaseNo == tenderCaseNo && x.Status == 900))
+                    // 取得form hidden資訊
+                    var vo = new 公開徵求InfoVo
                     {
-                        var url = GetUrl(UrlType.公開徵求_詳細資料頁, tenderCaseNo);
+                        pkTpAppeal = formNodes[i].SelectSingleNode(".//input[@id=\"pkTpAppeal\"]")?.GetAttributeValue("value", string.Empty),
+                        orgId = formNodes[i].SelectSingleNode(".//input[@id=\"orgId\"]")?.GetAttributeValue("value", string.Empty),
+                        orgName = formNodes[i].SelectSingleNode(".//input[@id=\"orgName\"]")?.GetAttributeValue("value", string.Empty),
+                        tenderCaseNo = formNodes[i].SelectSingleNode(".//input[@id=\"tenderCaseNo\"]")?.GetAttributeValue("value", string.Empty),
+                        tenderSq = formNodes[i].SelectSingleNode(".//input[@id=\"tenderSq\"]")?.GetAttributeValue("value", string.Empty),
+                        pkTpAppealHis = formNodes[i].SelectSingleNode(".//input[@id=\"pkTpAppealHis\"]")?.GetAttributeValue("value", string.Empty)
+                    };
+                    var caseNo = vo.GetCaseNo();
+
+                    // 檢查資料是否曾爬取過且成功
+                    if (!masterList.Any(x => x.CaseNo == caseNo && x.Status == 900))
+                    {
+                        var url = GetUrl(UrlType.公開徵求_詳細資料頁, vo);
                         var pairs = new Dictionary<string, object>
-                            {
-                                { nameof(tenderCaseNo), tenderCaseNo },
-                                { nameof(url), url }
-                            };
-                        if (masterList.Any(x => x.CaseNo == tenderCaseNo))
                         {
-                            _dao.Query<int>($"update PccMaster set Url = @url, Status = 100, UpdateTime = getdate() where CaseNo = @tenderCaseNo and Category = '公開徵求'", pairs);
+                            { nameof(caseNo), caseNo },
+                            { nameof(url), url }
+                        };
+                        if (masterList.Any(x => x.CaseNo == caseNo))
+                        {
+                            _dao.Query<int>($"update PccMaster set Url = @url, Status = 100, UpdateTime = getdate() where CaseNo = @caseNo and Category = '公開徵求'", pairs);
                         }
                         else
                         {
-                            // TODO: 待移除try-catch
-                            try
-                            {
-                                _dao.Query<int>($"insert into PccMaster (CaseNo, Category, Url, Status) values (@tenderCaseNo, '公開徵求', @url, 100)", pairs);
-                            }
-                            catch (Exception ex)
-                            {
-                                Console.WriteLine($"CaseNo: {tenderCaseNo} {Environment.NewLine}" +
-                                                  $"Msg: {ex.Message}");
-                                var pairs2 = new Dictionary<string, object>
-                                {
-                                    { nameof(tenderCaseNo), tenderCaseNo },
-                                    { nameof(ex.Message), ex.Message }
-                                };
-                                _dao.Query<int>($"insert into LogEvent(EventLevel ,EventType, EventContent, CaseNo) " +
-                                                $"values('Error', '公開徵求', @Message, @tenderCaseNo)", pairs2);
-                            }
+                            _dao.Query<int>($"insert into PccMaster (CaseNo, Category, Url, Status) values (@caseNo, '公開徵求', @url, 100)", pairs);
                         }
-                        tenderCaseNos.Add(tenderCaseNo);
-                    }
-                    else
-                    {
-                        ;
+                        vos.Add(vo);
                     }
                 }
 
@@ -94,33 +85,34 @@ namespace PccCrawler.Service
                     break;
                 }
             }
-            Console.WriteLine($"TotalItem: {total} count，NewItem: {tenderCaseNos.Count} count");
+            Console.WriteLine($"TotalItem: {total} count，NewItem: {vos.Count} count");
             #endregion
 
-            foreach (var tenderCaseNo in tenderCaseNos)
+            foreach (var vo in vos)
             {
-                Console.WriteLine($"Crawling Detail:{tenderCaseNo}...");
+                var caseNo = vo.GetCaseNo();
+                Console.WriteLine($"Crawling Detail:{caseNo}...");
                 try
                 {
-                    var detailDoc = await GetDetailHtmlDoc(tenderCaseNo);
+                    var detailDoc = await GetDetailHtmlDoc(vo);
                     _analyzeService.Analyze公開徵求(detailDoc);
                     var pairs = new Dictionary<string, object>
-                        {
-                            { nameof(tenderCaseNo), tenderCaseNo },
-                        };
-                    _dao.Query<int>($"update PccMaster set Status = 900 where CaseNo = @tenderCaseNo and Category = '公開徵求'", pairs);
+                    {
+                        { nameof(caseNo), caseNo },
+                    };
+                    _dao.Query<int>($"update PccMaster set Status = 900 where CaseNo = @caseNo and Category = '公開徵求'", pairs);
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"tenderCaseNo: {tenderCaseNo} {Environment.NewLine}" +
+                    Console.WriteLine($"vo: {vo.ToJson()} {Environment.NewLine}" +
                                       $"Msg: {ex.Message}");
                     var pairs = new Dictionary<string, object>
-                        {
-                            { nameof(tenderCaseNo), tenderCaseNo },
-                            { nameof(ex.Message), ex.Message }
-                        };
+                    {
+                        { nameof(caseNo), caseNo },
+                        { nameof(ex.Message), ex.Message }
+                    };
                     _dao.Query<int>($"insert into LogEvent(EventLevel ,EventType, EventContent, CaseNo) " +
-                                    $"values('Error', '公開徵求', @Message, @tenderCaseNo)", pairs);
+                                    $"values('Error', '公開徵求', @Message, @caseNo)", pairs);
                 }
                 if (_options.Mode == "Debug")
                 {
@@ -134,16 +126,17 @@ namespace PccCrawler.Service
         /// 取得Pcc網址
         /// </summary>
         /// <param name="type"></param>
-        /// <param name="args"></param>
+        /// <param name="vo">公開徵求InfoVo</param>
         /// <returns></returns>
-        private string GetUrl(UrlType type, string? tenderCaseNo = null)
+        private string GetUrl(UrlType type, 公開徵求InfoVo? vo = null)
         {
             var domain = "https://web.pcc.gov.tw";
             var url = type switch
             {
                 UrlType.公開徵求_搜尋結果頁 => $"{domain}/tps/tps/tp/main/tps/tp/searchAppealVendor.do?pMenu=common",
-                // TODO: Url有誤,缺少必要參數
-                UrlType.公開徵求_詳細資料頁 => $"{domain}/tps/tps/tp/main/tps/tp/tp.do?method=initialAppealViewVendor&pMenu=common&tenderCaseNo={tenderCaseNo}",
+                UrlType.公開徵求_詳細資料頁 => $"{domain}/tps/tps/tp/main/tps/tp/tp.do?method=initialAppealViewVendor&pMenu=common" +
+                                               $"&pkTpAppeal={vo?.pkTpAppeal}&orgId={vo?.orgId}&orgName={vo?.orgName}" +
+                                               $"&tenderCaseNo={vo?.tenderCaseNo}&tenderSq={vo?.tenderSq}&pkTpAppealHis={vo?.pkTpAppealHis}",
                 _ => $"{domain}/tps/tps/tp/main/tps/tp/searchAppealVendor.do?pMenu=common"
             };
             return url;
@@ -182,11 +175,11 @@ namespace PccCrawler.Service
         /// <summary>
         /// 取得詳細資料頁Html
         /// </summary>
-        /// <param name="tenderCaseNo">識別碼</param>
+        /// <param name="vo">公開徵求InfoVo</param>
         /// <returns></returns>
-        public async Task<HtmlDocument> GetDetailHtmlDoc(string tenderCaseNo)
+        public async Task<HtmlDocument> GetDetailHtmlDoc(公開徵求InfoVo vo)
         {
-            var url = GetUrl(UrlType.公開徵求_詳細資料頁, tenderCaseNo);
+            var url = GetUrl(UrlType.公開徵求_詳細資料頁, vo);
             var resp = await _httpService.DoGetAsync(url);
             var doc = new HtmlDocument();
             doc.LoadHtml(resp);

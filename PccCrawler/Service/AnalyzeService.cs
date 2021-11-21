@@ -81,7 +81,12 @@ namespace PccCrawler.Service
             var url = detailDoc.DocumentNode.SelectNodes("/html/head/meta")
                                             .First(x => x.GetAttributeValue("property", null) == "og:url")
                                             .GetAttributeValue("content", string.Empty);
-            var caseNo = url.Contains("tenderCaseNo=") ? url.Split("tenderCaseNo=")[1].Split('&')[0] : string.Empty;
+            var tenderCaseNo = url.Contains("tenderCaseNo=") ? url.Split("tenderCaseNo=")[1].Split('&')[0] : string.Empty;
+            var tenderSq = url.Contains("tenderSq=") ? url.Split("tenderSq=")[1].Split('&')[0] : string.Empty;
+            var pkTpAppeal = url.Contains("pkTpAppeal=") ? url.Split("pkTpAppeal=")[1].Split('&')[0] : string.Empty;
+            var pkTpAppealHis = url.Contains("pkTpAppealHis=") ? url.Split("pkTpAppealHis=")[1].Split('&')[0] : string.Empty;
+            var caseNo = $"{tenderCaseNo}_{tenderSq}_{pkTpAppeal}_{pkTpAppealHis}";
+
             var detailTrNodes = detailDoc.GetElementbyId("printRange")?.SelectNodes("./table/tr");
             if (detailTrNodes == null)
             {

@@ -164,7 +164,7 @@ namespace PccCrawler.Service
         public async Task<HtmlDocument> GetSearchHtmlDoc(int pageIndex, RadProctrgCate radProctrgCate)
         {
             var url = GetUrl(UrlType.招標公告_搜尋結果頁);
-            var formData = _httpService.GetFormData(new SearchVo
+            var formData = _httpService.GetFormData(new 招標公告SearchVo
             {
                 pageIndex = pageIndex,
                 proctrgCate = (int)radProctrgCate,
